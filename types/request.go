@@ -408,6 +408,10 @@ func ApplyGenerationConfigPatch(
 
 // Request is the request to the model.
 type Request struct {
+	// Model is the model name to use for this request.
+	// If empty, the provider's default model will be used.
+	Model string `json:"model,omitempty"`
+
 	// Messages is the conversation history.
 	Messages []Message `json:"messages"`
 

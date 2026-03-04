@@ -1,0 +1,124 @@
+# ========================================
+# 凭证与敏感信息
+# ========================================
+**/creds.json
+**/*.pem
+**/*.key
+**/*.cert
+**/*.p12
+**/*.pfx
+.env
+.env.*
+!.env.example
+secrets/
+credentials/
+
+# ========================================
+# 日志文件
+# ========================================
+*.log
+*.log.*
+logs/
+log/
+*.out
+
+# ========================================
+# Go 构建产物
+# ========================================
+# 二进制文件
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 测试二进制文件
+*.test
+
+# 覆盖率报告
+*.out
+coverage.html
+coverage.txt
+
+# Go workspace
+go.work
+go.work.sum
+
+# vendor 目录（按需取消注释）
+# vendor/
+
+# ========================================
+# IDE / 编辑器
+# ========================================
+
+# JetBrains (GoLand, IntelliJ, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Vim / Neovim
+*.swp
+*.swo
+*~
+.netrwhist
+tags
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ========================================
+# 操作系统
+# ========================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ========================================
+# 临时文件
+# ========================================
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+
+# ========================================
+# 测试与调试
+# ========================================
+debug
+debug.test
+__debug_bin*

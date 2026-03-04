@@ -7,6 +7,6 @@ import (
 )
 
 type Model interface {
-	GenerateContent(ctx context.Context, account types.Account, req types.Request) (*types.Response, error)
-	GenerateContentStream(ctx context.Context, account types.Account, req types.Request) (types.ResponseChain, error)
+	GenerateContent(ctx context.Context, creds any, req types.Request) (*types.Response, error)
+	GenerateContentStream(ctx context.Context, creds any, req types.Request) (types.ResponseChain, error)
 }

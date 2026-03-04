@@ -7,13 +7,13 @@ import (
 )
 
 type Credentials struct {
-	AccessToken  string     `json:"access_token"`
-	RefreshToken string     `json:"refresh_token,omitempty"`
-	ProfileArn   string     `json:"profile_arn,omitempty"`
-	AuthMethod   string     `json:"auth_method,omitempty"`
+	AccessToken  string     `json:"accessToken"`
+	RefreshToken string     `json:"refreshToken,omitempty"`
+	ProfileArn   string     `json:"profileArn,omitempty"`
+	AuthMethod   string     `json:"authMethod,omitempty"`
 	Provider     string     `json:"provider,omitempty"`
 	Region       string     `json:"region,omitempty"`
-	ExpiresAt    *time.Time `json:"expires_at,omitempty"`
+	ExpiresAt    *time.Time `json:"expiresAt,omitempty"`
 }
 
 // ExtractCredentials extracts credentials from the given byte slice
@@ -84,14 +84,14 @@ type ToolResult struct {
 
 // HistoryMessage represents a message in conversation history
 type HistoryMessage struct {
-	UserInputMessage       *UserInputMessage       `json:"userInputMessage,omitempty"`
+	UserInputMessage         *UserInputMessage         `json:"userInputMessage,omitempty"`
 	AssistantResponseMessage *AssistantResponseMessage `json:"assistantResponseMessage,omitempty"`
 }
 
 // AssistantResponseMessage represents an assistant response in history
 type AssistantResponseMessage struct {
-	Content   string     `json:"content"`
-	ToolUses  []ToolUse  `json:"toolUses,omitempty"`
+	Content  string    `json:"content"`
+	ToolUses []ToolUse `json:"toolUses,omitempty"`
 }
 
 // ToolUse represents a tool call made by the assistant
@@ -129,3 +129,5 @@ type KiroError struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 }
+
+
