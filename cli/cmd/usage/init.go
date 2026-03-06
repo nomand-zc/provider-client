@@ -13,6 +13,7 @@ func CMD() *cobra.Command {
 	// 注册子命令
 	cmd.AddCommand(
 		defaultUsageViewer.cmd(),
+		defaultModelsViewer.cmd(),
 	)
 
 	return cmd
