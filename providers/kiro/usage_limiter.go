@@ -19,49 +19,79 @@ const (
 	usageURL = "https://q.%s.amazonaws.com/getUsageLimits?isEmailRequired=true&origin=AI_EDITOR&resourceType=AGENTIC_REQUEST"
 )
 
-// usageLimitsResp 表示 getUsageLimits 接口的响应
-type usageLimitsResp struct {
-	UsageLimits *usageLimits `json:"usageLimits"`
-	Error       string       `json:"error"`
-	Message     string       `json:"message"`
+// kiroUsageResp 表示 getUsageLimits 接口的顶层响应
+type kiroUsageResp struct {
+	DaysUntilReset     int                  `json:"daysUntilReset"`
+	NextDateReset      float64              `json:"nextDateReset"`
+	UsageBreakdownList []usageBreakdownItem `json:"usageBreakdownList"`
+	SubscriptionInfo   *subscriptionInfo    `json:"subscriptionInfo"`
+	UserInfo           *userInfo            `json:"userInfo"`
 }
 
-type usageLimits struct {
-	DailyLimit         int64  `json:"dailyLimit"`
-	UsedToday          int64  `json:"usedToday"`
-	RemainingToday     int64  `json:"remainingToday"`
-	MonthlyLimit       int64  `json:"monthlyLimit"`
-	UsedThisMonth      int64  `json:"usedThisMonth"`
-	RemainingThisMonth int64  `json:"remainingThisMonth"`
-	ResetTime          string `json:"resetTime"`
-	AccountStatus      string `json:"accountStatus"`
-	Tier               string `json:"tier"`
+// usageBreakdownItem 表示 usageBreakdownList 中的单个条目
+type usageBreakdownItem struct {
+	UsageLimit                int            `json:"usageLimit"`
+	CurrentUsage              int            `json:"currentUsage"`
+	CurrentUsageWithPrecision float64        `json:"currentUsageWithPrecision"`
+	UsageLimitWithPrecision   float64        `json:"usageLimitWithPrecision"`
+	ResourceType              string         `json:"resourceType"`
+	Unit                      string         `json:"unit"`
+	DisplayName               string         `json:"displayName"`
+	DisplayNamePlural         string         `json:"displayNamePlural"`
+	FreeTrialInfo             *freeTrialInfo `json:"freeTrialInfo"`
+	OverageCap                int            `json:"overageCap"`
+	OverageRate               float64        `json:"overageRate"`
 }
 
-func (ul *usageLimits) convert() []*limitrule.LimitRule {
-	// 日限额规则
-	dailyRule := limitrule.LimitRule{
-		SourceType:      limitrule.SourceTypeRequest,
-		TimeGranularity: limitrule.GranularityDay,
-		WindowSize:      1,
-		Total:           float64(ul.DailyLimit),
-		Used:            float64(ul.UsedToday),
-		Remain:          float64(ul.RemainingToday),
-	}
-	dailyRule.CalculateWindowTime()
+// freeTrialInfo 表示免费试用信息
+type freeTrialInfo struct {
+	FreeTrialStatus           string  `json:"freeTrialStatus"`
+	FreeTrialExpiry           float64 `json:"freeTrialExpiry"`
+	UsageLimit                int     `json:"usageLimit"`
+	CurrentUsage              int     `json:"currentUsage"`
+	UsageLimitWithPrecision   float64 `json:"usageLimitWithPrecision"`
+	CurrentUsageWithPrecision float64 `json:"currentUsageWithPrecision"`
+}
 
-	// 月限额规则
-	monthlyRule := limitrule.LimitRule{
-		SourceType:      limitrule.SourceTypeRequest,
-		TimeGranularity: limitrule.GranularityMonth,
-		WindowSize:      1,
-		Total:           float64(ul.MonthlyLimit),
-		Used:            float64(ul.UsedThisMonth),
-		Remain:          float64(ul.RemainingThisMonth),
-	}
-	monthlyRule.CalculateWindowTime()
+// subscriptionInfo 表示订阅信息
+type subscriptionInfo struct {
+	SubscriptionTitle            string `json:"subscriptionTitle"`
+	Type                         string `json:"type"`
+	OverageCapability            string `json:"overageCapability"`
+	UpgradeCapability            string `json:"upgradeCapability"`
+	SubscriptionManagementTarget string `json:"subscriptionManagementTarget"`
+}
 
-	return []*limitrule.LimitRule{&dailyRule, &monthlyRule}
+// userInfo 表示用户信息
+type userInfo struct {
+	Email  string `json:"email"`
+	UserId string `json:"userId"`
+}
+
+// convert 将 kiroUsageResp 转换为 LimitRule 切片
+func (r *kiroUsageResp) convert() []*limitrule.LimitRule {
+	if len(r.UsageBreakdownList) == 0 {
+		return nil
+	}
+
+	rules := make([]*limitrule.LimitRule, 0, len(r.UsageBreakdownList))
+	for _, item := range r.UsageBreakdownList {
+		// 优先使用精确浮点值，若为 0 则回退到整数字段
+		total := item.UsageLimitWithPrecision
+		used := item.CurrentUsageWithPrecision
+
+		rule := &limitrule.LimitRule{
+			SourceType:      limitrule.SourceTypeToken,
+			TimeGranularity: limitrule.GranularityMonth,
+			WindowSize:      1,
+			Total:           total,
+			Used:            used,
+			Remain:          total - used,
+		}
+		rule.CalculateWindowTime()
+		rules = append(rules, rule)
+	}
+	return rules
 }
 
 // Models 返回默认支持的模型列表
@@ -92,22 +122,6 @@ func (p *kiroProvider) GetUsage(ctx context.Context, creds credentials.Credentia
 	}
 
 	switch resp.StatusCode {
-	case http.StatusUnauthorized:
-		return nil, &providers.HTTPError{
-			ErrorType:     providers.ErrorTypeUnauthorized,
-			ErrorCode:     providers.ErrorCodeUnauthorized,
-			Message:       "invalid or expired access token",
-			RawStatusCode: resp.StatusCode,
-			RawBody:       respBody,
-		}
-	case http.StatusForbidden:
-		return nil, &providers.HTTPError{
-			ErrorType:     providers.ErrorTypeForbidden,
-			ErrorCode:     providers.ErrorCodeForbidden,
-			Message:       "account temporarily suspended or insufficient permissions",
-			RawStatusCode: resp.StatusCode,
-			RawBody:       respBody,
-		}
 	case http.StatusTooManyRequests:
 		return nil, &providers.HTTPError{
 			ErrorType:     providers.ErrorTypeRateLimit,
@@ -120,7 +134,7 @@ func (p *kiroProvider) GetUsage(ctx context.Context, creds credentials.Credentia
 		if resp.StatusCode != http.StatusOK {
 			return nil, &providers.HTTPError{
 				ErrorType:     providers.ErrorTypeServerError,
-				ErrorCode:     providers.ErrorCodeServerError,
+				ErrorCode:     resp.StatusCode,
 				Message:       fmt.Sprintf("get usage limits failed, status=%d", resp.StatusCode),
 				RawStatusCode: resp.StatusCode,
 				RawBody:       respBody,
@@ -128,15 +142,12 @@ func (p *kiroProvider) GetUsage(ctx context.Context, creds credentials.Credentia
 		}
 	}
 
-	var result usageLimitsResp
+	var result kiroUsageResp
 	if err := json.Unmarshal(respBody, &result); err != nil {
 		return nil, errors.Annotatef(err, "parse get usage limits response failed, status=%d, body=%s",
 			resp.StatusCode, string(respBody))
 	}
-	if result.UsageLimits == nil {
-		return nil, errors.New("get usage limits response missing usageLimits field")
-	}
-	return result.UsageLimits.convert(), nil
+	return result.convert(), nil
 }
 
 func (p *kiroProvider) send(ctx context.Context, creds credentials.Credentials) (*http.Response, error) {

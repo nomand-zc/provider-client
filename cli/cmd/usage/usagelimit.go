@@ -2,6 +2,7 @@ package usage
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -22,6 +23,7 @@ var (
 // usageViewer 持有 usage view 命令的参数
 type usageViewer struct {
 	credFile     string
+	outputDir    string
 	providerName string
 	provider     providers.Provider
 }
@@ -43,6 +45,7 @@ func (u usageViewer) cmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&u.credFile, "file", "f", "", "凭证 JSON 文件路径（必填）")
+	cmd.Flags().StringVarP(&u.credFile, "output", "o", "", "用量信息输出目录（选填）")
 	cmd.Flags().StringVarP(&u.providerName, "provider", "p", "kiro", fmt.Sprintf("provider 名称，支持：%v（必填）", "kiro"))
 	_ = cmd.MarkFlagRequired("file")
 
@@ -107,18 +110,20 @@ func (u *usageViewer) runFile(filePath string) error {
 		return fmt.Errorf("获取用量信息失败: %w", err)
 	}
 
-	// 显示用量信息
-	fmt.Printf("\n=== 凭证用量信息 (%s) ===\n", filePath)
-	for _, rule := range usageRules {
-		switch rule.TimeGranularity {
-		case "day":
-			fmt.Printf("日限额: %.0f / %.0f (剩余: %.0f)\n", rule.Used, rule.Total, rule.Remain)
-		case "month":
-			fmt.Printf("月限额: %.0f / %.0f (剩余: %.0f)\n", rule.Used, rule.Total, rule.Remain)
-		default:
-			fmt.Printf("%s限额: %.0f / %.0f (剩余: %.0f)\n", rule.TimeGranularity, rule.Used, rule.Total, rule.Remain)
-		}
+	usageJSON, err := json.MarshalIndent(usageRules, "", "    ")
+	if err != nil {
+		return fmt.Errorf("序列化用量信息失败: %w", err)
 	}
+	if u.outputDir != "" {
+		if err := os.WriteFile(filepath.Join(u.outputDir, filepath.Base(filePath)+".usage.json"), usageJSON, 0644); err != nil {
+			return fmt.Errorf("写入用量信息文件失败: %w", err)
+		}
+
+		log.Infof("写入用量信息文件: %s\n", filepath.Join(u.outputDir, filepath.Base(filePath)+".usage.json"))
+		return nil
+	}
+	// 显示用量信息
+	fmt.Printf("\n=== 凭证用量信息 (%s) ===\n%s", filePath, string(usageJSON))
 
 	return nil
 }

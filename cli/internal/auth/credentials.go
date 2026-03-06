@@ -32,7 +32,7 @@ func LoadCredentials(providerName string, file string) (credentials.Credentials,
 	}
 
 	// 验证凭证，但允许过期凭证（ErrExpiresAtExpired 错误不视为失败）
-	if err = creds.Validate(); err != nil && err != credentials.ErrExpiresAtExpired {
+	if err = creds.Validate(); err != nil {
 		return creds, fmt.Errorf("验证凭证失败: %w", err)
 	}
 
@@ -44,7 +44,7 @@ func SaveCredentials(creds credentials.Credentials, file string) error {
 	if creds == nil {
 		return fmt.Errorf("凭证不能为空")
 	}
-	if err := creds.Validate(); err != nil && err != credentials.ErrExpiresAtExpired {
+	if err := creds.Validate(); err != nil {
 		return fmt.Errorf("验证凭证失败: %w", err)
 	}
 
@@ -112,24 +112,28 @@ func GetCredentialsFromFile(provider providers.Provider, file string) (credentia
 
 	// 检查凭证是否过期，如果过期则刷新
 	if err := creds.Validate(); err != nil {
-		if err != credentials.ErrExpiresAtExpired {
-			return nil, fmt.Errorf("无效凭证: %w", err)
-		}
-		log.Infof("检测到凭证已过期，正在刷新...")
-		refreshedCreds, err := provider.Refresh(context.Background(), creds)
-		if err != nil {
-			return nil, fmt.Errorf("刷新凭证失败: %w", err)
-		}
-
-		if err := SaveCredentials(refreshedCreds, file); err != nil {
-			return nil, fmt.Errorf("保存刷新后的凭证失败: %w", err)
-		}
-
-		// TODO： 检查是否还有额度
-
-		log.Infof("凭证刷新成功，已更新到文件: %s", file)
-		creds = refreshedCreds
+		return nil, fmt.Errorf("无效凭证: %w", err)
 	}
+
+	if !creds.IsExpired() {
+		return creds, nil
+	}
+	log.Infof("检测到凭证已过期，正在刷新...")
+	refreshedCreds, err := provider.Refresh(context.Background(), creds)
+	if err != nil {
+		return nil, fmt.Errorf("刷新凭证失败: %w", err)
+	}
+
+	if err := SaveCredentials(refreshedCreds, file); err != nil {
+		return nil, fmt.Errorf("保存刷新后的凭证失败: %w", err)
+	}
+
+	if !VerifyQuota(provider, refreshedCreds) {
+		return nil, fmt.Errorf("配额不足")
+	}
+
+	log.Infof("凭证刷新成功，已更新到文件: %s", file)
+	creds = refreshedCreds
 
 	return creds, nil
 }

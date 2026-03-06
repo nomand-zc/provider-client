@@ -38,7 +38,8 @@ func NewCredentials[T string | []byte](raw T) *Credentials {
 	return &creds
 }
 
-// Validate 验证凭据的有效性
+// Validate 校验凭据的格式有效性
+// 仅校验格式，不校验过期时间等业务相关性问题
 func (c *Credentials) Validate() error {
 	if c == nil {
 		return credentials.ErrCredentialsEmpty
@@ -54,9 +55,6 @@ func (c *Credentials) Validate() error {
 	}
 	if c.ExpiresAt == nil {
 		return credentials.ErrExpiresAtEmpty
-	}
-	if !c.ExpiresAt.After(time.Now()) {
-		return credentials.ErrExpiresAtExpired
 	}
 	if c.AuthMethod == "" {
 		return credentials.ErrAuthMethodEmpty
@@ -100,7 +98,7 @@ func (c *Credentials) GetExpiresAt() *time.Time {
 // IsExpired 检查凭据是否过期
 func (c *Credentials) IsExpired() bool {
 	if c.ExpiresAt == nil {
-		return false
+		return true
 	}
 	return time.Now().After(*c.ExpiresAt)
 }

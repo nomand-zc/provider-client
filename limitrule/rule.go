@@ -62,8 +62,13 @@ type LimitRule struct {
 	EndTime *time.Time `json:"end_time"`
 }
 
+// 检查是否触发了限流
+func (r *LimitRule) IsTriggered() bool {
+	return r.Remain <= 0
+}
+
 // IsEmpty 判断规则是否为空
-func (r *LimitRule) IsEmpty() bool {
+func (r *LimitRule) IsValid() bool {
 	return r == nil || r.Total == 0
 }
 
