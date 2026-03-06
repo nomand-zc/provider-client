@@ -1,0 +1,51 @@
+package providers
+
+// GenerationConfig contains configuration for text generation.
+type GenerationConfig struct {
+	// MaxTokens is the maximum number of tokens to generate.
+	MaxTokens *int `json:"max_tokens,omitempty"`
+
+	// Temperature controls randomness (0.0 to 2.0).
+	Temperature *float64 `json:"temperature,omitempty"`
+
+	// TopP controls nucleus sampling (0.0 to 1.0).
+	TopP *float64 `json:"top_p,omitempty"`
+
+	// Stream indicates whether to stream the response.
+	Stream bool `json:"stream"`
+
+	// Stop sequences where the API will stop generating further tokens.
+	Stop []string `json:"stop,omitempty"`
+
+	// PresencePenalty penalizes new tokens based on their existing frequency.
+	PresencePenalty *float64 `json:"presence_penalty,omitempty"`
+
+	// FrequencyPenalty penalizes new tokens based on their frequency in the text so far.
+	FrequencyPenalty *float64 `json:"frequency_penalty,omitempty"`
+
+	// ReasoningEffort limits the reasoning effort for reasoning models.
+	// Supported values: "low", "medium", "high".
+	// Only effective for OpenAI o-series models.
+	ReasoningEffort *string `json:"reasoning_effort,omitempty"`
+
+	// ThinkingEnabled enables thinking mode for Claude and Gemini models via OpenAI API.
+	ThinkingEnabled *bool `json:"thinking_enabled,omitempty"`
+
+	// ThinkingTokens controls the length of thinking for Claude and Gemini models via OpenAI API.
+	ThinkingTokens *int `json:"thinking_tokens,omitempty"`
+}
+
+// Request is the request to the model.
+type Request struct {
+	// Model is the model name to use for this request.
+	// If empty, the provider's default model will be used.
+	Model string `json:"model,omitempty"`
+
+	// Messages is the conversation history.
+	Messages []Message `json:"messages"`
+
+	// GenerationConfig contains the generation parameters.
+	GenerationConfig `json:"generation_config"`
+
+	Tools []Tool `json:"-"` // Tools are not serialized, handled separately
+}

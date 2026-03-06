@@ -1,9 +1,10 @@
-module github.com/nomand-zc/token101/provider-client
+module github.com/nomand-zc/provider-client
 
 go 1.24.11
 
 require (
-	github.com/bytedance/gg v1.1.0
+	github.com/google/uuid v1.6.0
+	github.com/juju/errors v1.0.0
 	go.uber.org/zap v1.27.1
 )
 
