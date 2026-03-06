@@ -12,6 +12,7 @@ import (
 
 	"github.com/nomand-zc/provider-client/credentials"
 	kirocreds "github.com/nomand-zc/provider-client/credentials/kiro"
+	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
 	kiroprovider "github.com/nomand-zc/provider-client/providers/kiro"
 )
@@ -71,7 +72,9 @@ func (r *refresher) run() error {
 
 // runDir 递归处理目录下所有 .json 文件
 func (r *refresher) runDir(dir string) error {
-	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	var successCount, failureCount int
+
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("遍历路径 %q 失败: %w", path, err)
 		}
@@ -82,16 +85,22 @@ func (r *refresher) runDir(dir string) error {
 			return nil
 		}
 		if err := r.runFile(path); err != nil {
-			return fmt.Errorf("处理文件 %q 失败: %w", path, err)
+			failureCount++
+			return nil
 		}
+		successCount++
 		return nil
 	})
+
+	log.Infof("刷新完成！总凭证数量: %d, 成功：%d，失败：%d\n", successCount+failureCount, successCount, failureCount)
+	return err
 }
 
 // runFile 读取、刷新并回写单个凭证 JSON 文件
 func (r *refresher) runFile(filePath string) error {
 	// 读取凭证文件
 	fileData, err := os.ReadFile(filePath)
+	log.Debugf("读取凭证文件: %s, 内容: %s", filePath, string(fileData))
 	if err != nil {
 		return fmt.Errorf("读取凭证文件失败: %w", err)
 	}
@@ -114,6 +123,7 @@ func (r *refresher) runFile(filePath string) error {
 	if err := os.WriteFile(filePath, credsJSON, 0600); err != nil {
 		return fmt.Errorf("写入凭证文件失败: %w", err)
 	}
+
 	return nil
 }
 
