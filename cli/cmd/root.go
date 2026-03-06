@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/nomand-zc/provider-client/cli/cmd/token"
+	"github.com/nomand-zc/provider-client/cli/cmd/usage"
 	"github.com/spf13/cobra"
 )
 
@@ -18,4 +19,5 @@ func Execute() error {
 
 func init() {
 	rootCmd.AddCommand(token.CMD())
+	rootCmd.AddCommand(usage.CMD())
 }

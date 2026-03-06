@@ -10,8 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/nomand-zc/provider-client/credentials"
-	kirocreds "github.com/nomand-zc/provider-client/credentials/kiro"
+	"github.com/nomand-zc/provider-client/cli/internal/common"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
 	kiroprovider "github.com/nomand-zc/provider-client/providers/kiro"
@@ -105,7 +104,8 @@ func (r *refresher) runFile(filePath string) error {
 		return fmt.Errorf("读取凭证文件失败: %w", err)
 	}
 
-	creds, err := buildCredentials(r.providerName, fileData)
+	// 使用公共工具函数构建凭证
+	creds, err := common.BuildCredentials(r.providerName, fileData)
 	if err != nil {
 		return err
 	}
@@ -125,21 +125,4 @@ func (r *refresher) runFile(filePath string) error {
 	}
 
 	return nil
-}
-
-func buildCredentials(providerName string, raw []byte) (credentials.Credentials, error) {
-	var creds credentials.Credentials
-	var err error
-	switch providerName {
-	case "kiro":
-		creds = kirocreds.NewCredentials(raw)
-	default:
-		return nil, fmt.Errorf("不支持的 provider: %q，支持的 provider 列表：%v", providerName, "kiro")
-	}
-
-	if err = creds.Validate(); err != nil && err != credentials.ErrExpiresAtExpired {
-		return creds, fmt.Errorf("验证凭证失败: %w", err)
-	}
-
-	return creds, nil
 }
