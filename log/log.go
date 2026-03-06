@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	zapLevel = zap.NewAtomicLevelAt(zapcore.InfoLevel)
+	ZapLevel = zap.NewAtomicLevelAt(zapcore.InfoLevel)
 
 	traceEnabled = false
 )
@@ -27,9 +27,9 @@ var (
 // You may replace it with whatever logger you like as long as it implements log.Logger interface.
 var Default Logger = zap.New(
 	zapcore.NewCore(
-		zapcore.NewConsoleEncoder(encoderConfig),
+		zapcore.NewConsoleEncoder(EncoderConfig),
 		zapcore.AddSync(os.Stdout),
-		zapLevel,
+		ZapLevel,
 	),
 	zap.AddCaller(),
 	zap.AddCallerSkip(1),
@@ -40,9 +40,9 @@ var Default Logger = zap.New(
 // like DebugContext can be tuned independently of Default.
 var ContextDefault Logger = zap.New(
 	zapcore.NewCore(
-		zapcore.NewConsoleEncoder(encoderConfig),
+		zapcore.NewConsoleEncoder(EncoderConfig),
 		zapcore.AddSync(os.Stdout),
-		zapLevel,
+		ZapLevel,
 	),
 	zap.AddCaller(),
 	zap.AddCallerSkip(1),
@@ -53,22 +53,22 @@ var ContextDefault Logger = zap.New(
 func SetLevel(level string) {
 	switch level {
 	case LevelDebug:
-		zapLevel.SetLevel(zapcore.DebugLevel)
+		ZapLevel.SetLevel(zapcore.DebugLevel)
 	case LevelInfo:
-		zapLevel.SetLevel(zapcore.InfoLevel)
+		ZapLevel.SetLevel(zapcore.InfoLevel)
 	case LevelWarn:
-		zapLevel.SetLevel(zapcore.WarnLevel)
+		ZapLevel.SetLevel(zapcore.WarnLevel)
 	case LevelError:
-		zapLevel.SetLevel(zapcore.ErrorLevel)
+		ZapLevel.SetLevel(zapcore.ErrorLevel)
 	case LevelFatal:
-		zapLevel.SetLevel(zapcore.FatalLevel)
+		ZapLevel.SetLevel(zapcore.FatalLevel)
 	default:
 		// Default to info level if the level is not recognized
-		zapLevel.SetLevel(zapcore.InfoLevel)
+		ZapLevel.SetLevel(zapcore.InfoLevel)
 	}
 }
 
-var encoderConfig = zapcore.EncoderConfig{
+var EncoderConfig = zapcore.EncoderConfig{
 	TimeKey:        "ts",
 	LevelKey:       "lvl",
 	NameKey:        "name",
