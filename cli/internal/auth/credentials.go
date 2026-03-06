@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,11 @@ import (
 	kirocreds "github.com/nomand-zc/provider-client/credentials/kiro"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
+)
+
+var (
+	// 配额不足错误
+	ErrQuotaInsufficient = errors.New("QuotaInsufficient")
 )
 
 // LoadCredentials 从文件中加载凭证
@@ -121,7 +127,7 @@ func GetCredentialsFromFile(provider providers.Provider, file string) (credentia
 	log.Infof("检测到凭证已过期，正在刷新...")
 	refreshedCreds, err := provider.Refresh(context.Background(), creds)
 	if err != nil {
-		return nil, fmt.Errorf("刷新凭证失败: %w", err)
+		return nil, err
 	}
 
 	if err := SaveCredentials(refreshedCreds, file); err != nil {
@@ -129,7 +135,7 @@ func GetCredentialsFromFile(provider providers.Provider, file string) (credentia
 	}
 
 	if !VerifyQuota(provider, refreshedCreds) {
-		return nil, fmt.Errorf("配额不足")
+		return nil, ErrQuotaInsufficient
 	}
 
 	log.Infof("凭证刷新成功，已更新到文件: %s", file)

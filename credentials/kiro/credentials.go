@@ -38,6 +38,16 @@ func NewCredentials[T string | []byte](raw T) *Credentials {
 	return &creds
 }
 
+// Clone 克隆凭据实例
+func (c *Credentials) Clone() *Credentials {
+	clone := *c
+	if c.ExpiresAt != nil {
+		t := *c.ExpiresAt
+		clone.ExpiresAt = &t
+	}
+	return &clone
+}
+
 // Validate 校验凭据的格式有效性
 // 仅校验格式，不校验过期时间等业务相关性问题
 func (c *Credentials) Validate() error {

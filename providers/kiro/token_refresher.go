@@ -79,28 +79,29 @@ func (r *kiroProvider) refreshSocialToken(ctx context.Context, creds *kirocreds.
 			resp.StatusCode, string(respBody))
 	}
 
-	// 处理 invalid_grant（Refresh Token 已失效）
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusUnauthorized {
-		if result.Error == "invalid_grant" || result.Error == "InvalidRefreshToken" {
+	switch resp.StatusCode {
+	case http.StatusTooManyRequests:
+		return nil, &providers.HTTPError{
+			ErrorType:     providers.ErrorTypeRateLimit,
+			ErrorCode:     resp.StatusCode,
+			Message:       "kiro social refresh rate limit",
+			RawStatusCode: resp.StatusCode,
+			RawBody:       respBody,
+		}
+	default:
+		if resp.StatusCode != http.StatusOK {
 			return nil, providers.ErrInvalidGrant
 		}
-		return nil, errors.Errorf("kiro social refresh failed, status=%d, body=%s",
-			resp.StatusCode, string(respBody))
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("kiro social refresh failed, status=%d, body=%s",
-			resp.StatusCode, string(respBody))
-	}
-
-	res := *creds
-	res.AccessToken = result.AccessToken
-	res.RefreshToken = result.RefreshToken
-	res.ProfileArn = result.ProfileArn
+	newCreds := creds.Clone()
+	newCreds.AccessToken = result.AccessToken
+	newCreds.RefreshToken = result.RefreshToken
+	newCreds.ProfileArn = result.ProfileArn
 	expiresAt := time.Now().Add(time.Duration(result.ExpiresIn) * time.Second)
-	res.ExpiresAt = &expiresAt
+	newCreds.ExpiresAt = &expiresAt
 
-	return &res, nil
+	return newCreds, nil
 }
 
 func (r *kiroProvider) refreshIDCToken(ctx context.Context, creds *kirocreds.Credentials) (*kirocreds.Credentials, error) {
