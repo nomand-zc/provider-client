@@ -55,7 +55,7 @@ func (c *Credentials) Validate() error {
 	if c.ExpiresAt == nil {
 		return credentials.ErrExpiresAtEmpty
 	}
-	if c.ExpiresAt.Before(time.Now()) {
+	if !c.ExpiresAt.After(time.Now()) {
 		return credentials.ErrExpiresAtExpired
 	}
 	if c.AuthMethod == "" {

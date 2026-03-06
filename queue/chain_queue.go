@@ -9,6 +9,7 @@ type queue[T any] struct {
 	closed uint32 // 使用原子操作保证并发安全
 }
 
+// NewChainQueue 创建一个链式队列
 func NewChainQueue[T any](bufferSize int) Queue[T] {
 	return &queue[T]{
 		c: make(chan T, bufferSize),

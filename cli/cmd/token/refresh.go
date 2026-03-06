@@ -2,7 +2,6 @@ package token
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/nomand-zc/provider-client/cli/internal/common"
+	"github.com/nomand-zc/provider-client/cli/internal/auth"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
 	kiroprovider "github.com/nomand-zc/provider-client/providers/kiro"
@@ -98,14 +97,7 @@ func (r *refresher) runDir(dir string) error {
 // runFile 读取、刷新并回写单个凭证 JSON 文件
 func (r *refresher) runFile(filePath string) error {
 	// 读取凭证文件
-	fileData, err := os.ReadFile(filePath)
-	log.Debugf("读取凭证文件: %s, 内容: %s", filePath, string(fileData))
-	if err != nil {
-		return fmt.Errorf("读取凭证文件失败: %w", err)
-	}
-
-	// 使用公共工具函数构建凭证
-	creds, err := common.BuildCredentials(r.providerName, fileData)
+	creds, err := auth.LoadCredentials(r.providerName, filePath)
 	if err != nil {
 		return err
 	}
@@ -116,13 +108,8 @@ func (r *refresher) runFile(filePath string) error {
 	}
 
 	// 将刷新后的凭证写回文件
-	credsJSON, err := json.Marshal(newCreds)
-	if err != nil {
-		return fmt.Errorf("序列化凭证失败: %w", err)
+	if err := auth.SaveCredentials(newCreds, filePath); err != nil {
+		return fmt.Errorf("保存凭证失败: %w", err)
 	}
-	if err := os.WriteFile(filePath, credsJSON, 0600); err != nil {
-		return fmt.Errorf("写入凭证文件失败: %w", err)
-	}
-
 	return nil
 }

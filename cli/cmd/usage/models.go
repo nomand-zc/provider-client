@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/nomand-zc/provider-client/cli/internal/common"
+	"github.com/nomand-zc/provider-client/cli/internal/auth"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
 	kiroprovider "github.com/nomand-zc/provider-client/providers/kiro"
@@ -128,12 +128,7 @@ func (m *modelsViewer) runDir(dir string) error {
 
 // runFile 读取凭证文件并显示其支持的模型列表
 func (m *modelsViewer) runFile(filePath string) error {
-	fileData, err := os.ReadFile(filePath)
-	if err != nil {
-		return fmt.Errorf("读取凭证文件失败: %w", err)
-	}
-
-	creds, err := common.BuildCredentials(m.providerName, fileData)
+	creds, err := auth.LoadCredentials(m.providerName, filePath)
 	if err != nil {
 		return err
 	}

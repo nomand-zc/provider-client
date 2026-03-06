@@ -1,16 +1,26 @@
 package kiro
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/nomand-zc/provider-client/credentials"
+	kirocreds "github.com/nomand-zc/provider-client/credentials/kiro"
 	"github.com/nomand-zc/provider-client/httpclient"
+	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
+	"github.com/nomand-zc/provider-client/providers/kiro/converter"
 	"github.com/nomand-zc/provider-client/queue"
 )
 
 const (
 	providerName = "kiro"
+	defaultQueueSize = 100
 )
 
 type kiroProvider struct {
@@ -44,31 +54,62 @@ func (p *kiroProvider) GenerateContent(ctx context.Context, creds credentials.Cr
 // GenerateContentStream generates content in a stream.
 func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credentials.Credentials, 
 	req providers.Request) (queue.Reader[*providers.Response], error){
-		return nil, nil
+	kiroCreds := creds.(*kirocreds.Credentials)
+
+	url := fmt.Sprintf(p.options.url, kiroCreds.Region)
+	cwReq := converter.ConvertRequest(ctx, req)
+	if kiroCreds.AuthMethod == kirocreds.AuthMethodSocial && kiroCreds.ProfileArn != "" {
+		cwReq.ProfileArn = kiroCreds.ProfileArn
+	}
+	cwReqBody, err := json.Marshal(cwReq)
+	if err != nil {
+		return nil, err
+	}
+	request, err := http.NewRequest("POST", url, bytes.NewReader(cwReqBody))
+	if err != nil {
+		return nil, err
+	}
+	for key, value := range p.options.headerBuilder() {
+		request.Header.Set(key, value)
+	}
+	request.Header.Set("Accept", "text/event-stream")
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", kiroCreds.AccessToken))
+	request.Header.Set("amz-sdk-invocation-id", uuid.NewString())
+
+	resp, err := p.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	// 检查状态码
+	if resp.StatusCode != http.StatusOK {
+		return nil, &providers.HTTPError{
+			ErrorType:       providers.ErrorTypeForbidden,
+			ErrorCode:       resp.StatusCode,
+			Message:         fmt.Sprintf("HTTP status code: %d", resp.StatusCode),
+			RawStatusCode:   resp.StatusCode,
+		}
+	}
+	reader, err := converter.ProcessEventStream(ctx, resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	chainQueue := queue.NewChainQueue[*providers.Response](defaultQueueSize)
+	go func () {
+		defer chainQueue.Close()
+		defer resp.Body.Close()
+		for !reader.Closed() {
+			event, err := reader.Read()
+			if err != nil && !errors.Is(err, queue.ErrQueueClosed) {
+				log.Errorf("kiro stream reader error: %v", err)
+				return
+			}
+			resp, err := converter.ConvertResponse(ctx, event)
+			if err != nil || resp == nil{
+				continue
+			}
+			chainQueue.Write(resp)
+		}
+	}()
+	
+	return chainQueue, nil
 }
-
-// buildURL 构建 Kiro API 请求 URL，优先使用凭证中的 region
-// func (k *kiroProvider) buildURL(creds Credentials) string {
-// 	region := gcond.If(creds.Region != "", creds.Region, k.options.defaultRegion)
-// 	return fmt.Sprintf(k.options.url, region)
-// }
-
-// // buildHeaders 根据凭证和配置选项构建 Kiro API 所需的 HTTP 请求头
-// func (k *kiroProvider) buildHeaders(creds Credentials) (map[string]string, error) {
-// 	// 以 defaultOptions.headers 为基础构建 header map
-// 	headers := make(map[string]string, len(defaultOptions.headers)+1)
-// 	maps.Copy(headers, defaultOptions.headers)
-
-// 	// 设置认证头
-// 	headers["Authorization"] = fmt.Sprintf("Bearer %s", creds.AccessToken)
-
-// 	// 设置每次请求唯一的调用 ID（UUID v4 格式）
-// 	headers["amz-sdk-invocation-id"] = generateUUID()
-
-// 	// 合并 options.headers 中的自定义 header（可覆盖默认值）
-// 	maps.Copy(headers, k.options.headers)
-
-// 	log.DebugfContext(context.Background(), "[kiro] buildHeaders headers=%v", headers)
-
-// 	return headers, nil
-// }

@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/nomand-zc/provider-client/cli/internal/common"
+	"github.com/nomand-zc/provider-client/cli/internal/auth"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
 	kiroprovider "github.com/nomand-zc/provider-client/providers/kiro"
@@ -97,14 +97,7 @@ func (u *usageViewer) runDir(dir string) error {
 // runFile 读取并显示单个凭证文件的用量信息
 func (u *usageViewer) runFile(filePath string) error {
 	// 读取凭证文件
-	fileData, err := os.ReadFile(filePath)
-	log.Debugf("读取凭证文件: %s, 内容: %s", filePath, string(fileData))
-	if err != nil {
-		return fmt.Errorf("读取凭证文件失败: %w", err)
-	}
-
-	// 使用公共工具函数构建凭证
-	creds, err := common.BuildCredentials(u.providerName, fileData)
+	creds, err := auth.LoadCredentials(u.providerName, filePath)
 	if err != nil {
 		return err
 	}
