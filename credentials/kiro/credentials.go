@@ -40,6 +40,9 @@ func NewCredentials[T string | []byte](raw T) *Credentials {
 
 // Validate 验证凭据的有效性
 func (c *Credentials) Validate() error {
+	if c == nil {
+		return credentials.ErrCredentialsEmpty
+	}
 	if c.AccessToken == "" {
 		return credentials.ErrAccessTokenEmpty
 	}

@@ -3,6 +3,7 @@ package credentials
 import "errors"
 
 var (
+	ErrCredentialsEmpty = errors.New("credentials is empty")
 	// ErrAccessTokenEmpty 表示访问令牌为空的错误
 	ErrAccessTokenEmpty = errors.New("access token is empty")
 	// ErrRefreshTokenEmpty 表示刷新令牌为空的错误
