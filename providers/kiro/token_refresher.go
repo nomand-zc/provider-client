@@ -140,13 +140,19 @@ func (r *kiroProvider) refreshIDCToken(ctx context.Context, creds *kirocreds.Cre
 			resp.StatusCode, string(respBody))
 	}
 
-	if resp.StatusCode == http.StatusBadRequest && result.Error == "invalid_grant" {
-		return nil, providers.ErrInvalidGrant
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("kiro IDC refresh failed, status=%d, body=%s",
-			resp.StatusCode, string(respBody))
+	switch resp.StatusCode {
+	case http.StatusTooManyRequests:
+		return nil, &providers.HTTPError{
+			ErrorType:     providers.ErrorTypeRateLimit,
+			ErrorCode:     resp.StatusCode,
+			Message:       "kiro IDC refresh rate limit",
+			RawStatusCode: resp.StatusCode,
+			RawBody:       respBody,
+		}
+	default:
+		if resp.StatusCode != http.StatusOK {
+			return nil, providers.ErrInvalidGrant
+		}
 	}
 
 	res := *creds

@@ -116,30 +116,23 @@ func GetCredentialsFromFile(provider providers.Provider, file string) (credentia
 		return nil, fmt.Errorf("构建凭证失败: %w", err)
 	}
 
-	// 检查凭证是否过期，如果过期则刷新
-	if err := creds.Validate(); err != nil {
-		return nil, fmt.Errorf("无效凭证: %w", err)
+	if creds.IsExpired() {
+		log.Infof("检测到凭证已过期，正在刷新...")
+		creds, err = provider.Refresh(context.Background(), creds)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := SaveCredentials(creds, file); err != nil {
+			return nil, fmt.Errorf("保存刷新后的凭证失败: %w", err)
+		}
 	}
 
-	if !creds.IsExpired() {
-		return creds, nil
-	}
-	log.Infof("检测到凭证已过期，正在刷新...")
-	refreshedCreds, err := provider.Refresh(context.Background(), creds)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := SaveCredentials(refreshedCreds, file); err != nil {
-		return nil, fmt.Errorf("保存刷新后的凭证失败: %w", err)
-	}
-
-	if !VerifyQuota(provider, refreshedCreds) {
+	if !VerifyQuota(provider, creds) {
 		return nil, ErrQuotaInsufficient
 	}
 
 	log.Infof("凭证刷新成功，已更新到文件: %s", file)
-	creds = refreshedCreds
 
 	return creds, nil
 }

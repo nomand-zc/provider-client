@@ -1,7 +1,6 @@
 package scan
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/nomand-zc/provider-client/cli/internal/auth"
+	"github.com/nomand-zc/provider-client/cli/utils"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
 	kiroprovider "github.com/nomand-zc/provider-client/providers/kiro"
@@ -100,8 +100,8 @@ func (s *credScanner) run() error {
 
 		// 根据状态移动文件
 		destPath := filepath.Join(s.destDir, string(status), info.Name())
-		if err := os.Rename(path, destPath); err != nil {
-			log.Warnf("移动凭证文件 %q 到 %q 失败: %v", path, destPath, err)
+		if err := utils.CopyFile(path, destPath); err != nil {
+			log.Warnf("拷贝凭证文件 %q 到 %q 失败: %v", path, destPath, err)
 			return nil
 		}
 
@@ -135,7 +135,7 @@ func (s *credScanner) run() error {
 func (s *credScanner) checkCredential(filePath string) (credStatus, error) {
 	_, err := auth.GetCredentialsFromFile(s.provider, filePath)
 	if err != nil {
-		if errors.Is(err, providers.ErrInvalidGrant) || errors.Is(err, auth.ErrQuotaInsufficient) {
+		if providers.IsRateLimitError(err) {
 			return statusLimit, nil
 		}
 		return statusDisable, nil

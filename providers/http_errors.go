@@ -116,24 +116,54 @@ func As(err error) (*HTTPError, bool) {
 	return e, ok
 }
 
-// IsBadRequest 判断是否是 ErrorTypeBadRequest（400）错误
-func (e *HTTPError) IsBadRequest() bool {
+// IsBadRequestError 判断是否是 ErrorTypeBadRequest（400）错误
+func IsBadRequestError(err error) bool {
+	convertedErr, ok := As(err)
+	return ok && convertedErr.IsBadRequestError()
+}
+
+// IsBadRequestError 判断是否是 ErrorTypeBadRequest（400）错误
+func (e *HTTPError) IsBadRequestError() bool {
 	return e.ErrorType == ErrorTypeBadRequest
 }
 
-// IsUnauthorized 判断是否是 ErrorTypeUnauthorized（401）错误
-func (e *HTTPError) IsUnauthorized() bool {
+// IsUnauthorizedError 判断是否是 ErrorTypeUnauthorized（401）错误
+func IsUnauthorizedError(err error) bool {
+	convertedErr, ok := As(err)
+	return ok && convertedErr.IsUnauthorizedError()
+}
+
+// IsUnauthorizedError 判断是否是 ErrorTypeUnauthorized（401）错误
+func (e *HTTPError) IsUnauthorizedError() bool {
 	return e.ErrorType == ErrorTypeUnauthorized
 }
 
-// IsForbidden 判断是否是 ErrorTypeForbidden（403）错误
-func (e *HTTPError) IsForbidden() bool {
+// IsForbiddenError 判断是否是 ErrorTypeForbidden（403）错误
+func IsForbiddenError(err error) bool {
+	convertedErr, ok := As(err)
+	return ok && convertedErr.IsForbiddenError()
+}
+
+// IsForbiddenError 判断是否是 ErrorTypeForbidden（403）错误
+func (e *HTTPError) IsForbiddenError() bool {
 	return e.ErrorType == ErrorTypeForbidden
 }
 
-// IsRateLimit 判断是否是 ErrorTypeRateLimit（429）错误
-func (e *HTTPError) IsRateLimit() bool {
+// IsRateLimitError 判断是否是 ErrorTypeRateLimit（429）错误
+func IsRateLimitError(err error) bool {
+	convertedErr, ok := As(err)
+	return ok && convertedErr.IsRateLimitError()
+}
+
+// IsRateLimitError 判断是否是 ErrorTypeRateLimit（429）错误
+func (e *HTTPError) IsRateLimitError() bool {
 	return e.ErrorType == ErrorTypeRateLimit
+}
+
+// IsServerError 判断是否是 ErrorTypeServerError（500）错误
+func IsServerError(err error) bool {
+	convertedErr, ok := As(err)
+	return ok && convertedErr.IsServerError()
 }
 
 // IsServerError 判断是否是 ErrorTypeServerError（500）错误
