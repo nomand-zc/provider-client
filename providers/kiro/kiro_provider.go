@@ -93,7 +93,7 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 	if err != nil {
 		return nil, err
 	}
-	chainQueue := queue.NewChainQueue[*providers.Response](defaultQueueSize)
+	chainQueue := queue.NewChanQueue[*providers.Response](defaultQueueSize)
 	go func () {
 		defer chainQueue.Close()
 		defer resp.Body.Close()

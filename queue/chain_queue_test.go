@@ -9,7 +9,7 @@ import (
 
 func TestChainQueue(t *testing.T) {
 	// 测试创建队列
-	q := NewChainQueue[int](10)
+	q := NewChanQueue[int](10)
 
 	// 测试Closed方法
 	if q.Closed() {
@@ -103,7 +103,7 @@ func TestChainQueue(t *testing.T) {
 
 // TestConcurrentAccess 测试并发读写场景
 func TestConcurrentAccess(t *testing.T) {
-	q := NewChainQueue[int](100)
+	q := NewChanQueue[int](100)
 	var wg sync.WaitGroup
 	
 	// 启动10个写入goroutine
@@ -151,7 +151,7 @@ func TestConcurrentAccess(t *testing.T) {
 
 // TestConcurrentClose 测试并发关闭场景
 func TestConcurrentClose(t *testing.T) {
-	q := NewChainQueue[int](10)
+	q := NewChanQueue[int](10)
 	var wg sync.WaitGroup
 	
 	// 启动多个goroutine同时尝试关闭
@@ -197,7 +197,7 @@ func TestConcurrentClose(t *testing.T) {
 
 // TestQueueFull 测试队列满的情况
 func TestQueueFull(t *testing.T) {
-	q := NewChainQueue[int](5) // 小缓冲区
+	q := NewChanQueue[int](5) // 小缓冲区
 	
 	// 填满队列
 	for i := 0; i < 5; i++ {

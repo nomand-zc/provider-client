@@ -19,7 +19,7 @@ const (
 // ProcessEventStream 处理事件流
 func ProcessEventStream(ctx context.Context, reader io.Reader) (queue.Reader[*parser.EventStreamMessage], error) {
 	buf := make([]byte, defaultBufferSize)
-	chainQueue := queue.NewChainQueue[*parser.EventStreamMessage](defaultQueueSize)
+	chainQueue := queue.NewChanQueue[*parser.EventStreamMessage](defaultQueueSize)
 	var totalReadBytes int
 
 	go func(){
