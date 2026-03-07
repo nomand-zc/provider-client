@@ -42,7 +42,9 @@ func NewProvider(opts ...Option) *kiroProvider {
 	}
 	return &kiroProvider{
 		options:    options,
-		httpClient: httpclient.New(),
+		httpClient: httpclient.New(httpclient.WithMiddleware(
+			httpclient.LoggingMiddleware,
+		)),
 	}
 }
 
@@ -116,8 +118,7 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("[kiroProvider.GenerateContentStream] kiro request: %s", string(cwReqBody))
-	request, err := http.NewRequest("POST", url, bytes.NewReader(cwReqBody))
+	request, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(cwReqBody))
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +169,7 @@ func (p *kiroProvider) handlerStreamEvent(ctx context.Context, inv *providers.In
 			payloadBuf = payloadBuf[0:0]
 			e, err := decoder.Decode(respBody, payloadBuf)
 			if err != nil {
-				if !errors.Is(err, queue.ErrQueueClosed) {
+				if err != io.EOF {
 					firstErr = err
 					log.Errorf("kiro stream decode error: %v", err)
 				}

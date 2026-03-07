@@ -6,6 +6,7 @@ import (
 
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
+	"github.com/nomand-zc/provider-client/utils"
 )
 
 // errorParser 处理 error 类型消息
@@ -48,7 +49,7 @@ func (p *errorParser) Parse(msg *StreamMessage) (*providers.Response, error) {
 		Error: &providers.ResponseError{
 			Message: errorMessage,
 			Type:    "error",
-			Code:    strPtr(errorCode),
+			Code:    utils.ToPtr(errorCode),
 		},
 	}, nil
 }

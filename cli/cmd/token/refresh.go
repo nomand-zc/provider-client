@@ -90,7 +90,7 @@ func (r *refresher) runDir(dir string) error {
 		return nil
 	})
 
-	log.Infof("刷新完成！总凭证数量: %d, 成功：%d，失败：%d\n", successCount+failureCount, successCount, failureCount)
+	log.Infof("\n刷新完成！总凭证数量: %d, 成功：%d，失败：%d\n", successCount+failureCount, successCount, failureCount)
 	return err
 }
 

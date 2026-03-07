@@ -88,6 +88,7 @@ func (g *generator) run() error {
 		return fmt.Errorf("解析请求 JSON 失败: %w", err)
 	}
 
+	log.Infof("\n ===== 开始生成 ===== \n原始请求: %s\n", string(reqData))
 	if g.stream {
 		return g.runStream(creds, req)
 	}
@@ -99,7 +100,6 @@ func (g *generator) runStream(creds credentials.Credentials, req providers.Reque
 	// 确保启用流式模式
 	req.GenerationConfig.Stream = true
 
-	log.Infof("开始流式生成内容...")
 	reader, err := g.provider.GenerateContentStream(context.Background(), creds, req)
 	if err != nil {
 		return fmt.Errorf("流式生成失败: %w", err)
@@ -107,7 +107,14 @@ func (g *generator) runStream(creds credentials.Credentials, req providers.Reque
 
 	// 处理流式响应
 	for {
-		response, err := reader.Read(context.Background())
+		resp, err := reader.Read(context.Background())
+		// 输出响应
+		rspData, jsonErr := json.MarshalIndent(resp, "", "  ")
+		if jsonErr != nil {
+			return fmt.Errorf("序列化响应失败: %w", jsonErr)
+		}
+		log.Infof("\n[generator-runStream] Response Chunk: %s, err: %v\n", string(rspData), err)
+
 		if err != nil {
 			if errors.Is(err, queue.ErrQueueClosed) {
 				break
@@ -115,12 +122,12 @@ func (g *generator) runStream(creds credentials.Credentials, req providers.Reque
 			return fmt.Errorf("读取流式响应失败: %w", err)
 		}
 
-		if response == nil {
+		if resp == nil {
 			continue
 		}
 	}
 
-	log.Infof("\n流式生成完成")
+	log.Infof("\n ===== 流式生成完成 =====")
 	return nil
 }
 
@@ -128,7 +135,6 @@ func (g *generator) runStream(creds credentials.Credentials, req providers.Reque
 func (g *generator) runNonStream(creds credentials.Credentials, req providers.Request) error {
 	req.GenerationConfig.Stream = false
 
-	log.Infof("开始非流式生成内容...")
 	resp, err := g.provider.GenerateContent(context.Background(), creds, req)
 	if err != nil {
 		return fmt.Errorf("生成失败: %w", err)
@@ -139,8 +145,8 @@ func (g *generator) runNonStream(creds credentials.Credentials, req providers.Re
 	if err != nil {
 		return fmt.Errorf("序列化响应失败: %w", err)
 	}
-	fmt.Println(string(rspData))
+	log.Infof("\n[generator-runNonStream] Response: %s\n", string(rspData))
 
-	log.Infof("生成完成")
+	log.Infof("\n ===== 生成完成 =====")
 	return nil
 }

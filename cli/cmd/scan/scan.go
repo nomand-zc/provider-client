@@ -93,7 +93,7 @@ func (s *credScanner) run() error {
 
 		status, err := s.checkCredential(path)
 		if err != nil {
-			log.Warnf("凭证文件 %q 格式校验失败: %v，跳过", path, err)
+			log.Warnf("\n凭证文件 %q 格式校验失败: %v，跳过", path, err)
 			invalidCount++
 			return nil
 		}
@@ -101,20 +101,20 @@ func (s *credScanner) run() error {
 		// 根据状态移动文件
 		destPath := filepath.Join(s.destDir, string(status), info.Name())
 		if err := utils.CopyFile(path, destPath); err != nil {
-			log.Warnf("拷贝凭证文件 %q 到 %q 失败: %v", path, destPath, err)
+			log.Warnf("\n拷贝凭证文件 %q 到 %q 失败: %v", path, destPath, err)
 			return nil
 		}
 
 		switch status {
 		case statusEnable:
 			enableCount++
-			log.Infof("[有效] %s -> %s", path, destPath)
+			log.Infof("\n[有效] %s -> %s", path, destPath)
 		case statusLimit:
 			limitCount++
-			log.Infof("[限流] %s -> %s", path, destPath)
+			log.Infof("\n[限流] %s -> %s", path, destPath)
 		case statusDisable:
 			disableCount++
-			log.Infof("[失效] %s -> %s", path, destPath)
+			log.Infof("\n[失效] %s -> %s", path, destPath)
 		}
 
 		return nil
@@ -125,7 +125,7 @@ func (s *credScanner) run() error {
 	}
 
 	total := enableCount + limitCount + disableCount + invalidCount
-	log.Infof("扫描完成！总凭证数量: %d, 有效: %d, 限流: %d, 失效: %d, 格式无效: %d",
+	log.Infof("\n扫描完成！总凭证数量: %d, 有效: %d, 限流: %d, 失效: %d, 格式无效: %d",
 		total, enableCount, limitCount, disableCount, invalidCount)
 
 	return nil
@@ -153,7 +153,7 @@ func ensureDirs(destDir string) error {
 	for _, dir := range dirs {
 		// 如果子目录已存在，先删除（连同其中的文件一起清除）
 		if _, err := os.Stat(dir); err == nil {
-			log.Infof("子目录 %q 已存在，清空旧文件...", dir)
+			log.Infof("\n子目录 %q 已存在，清空旧文件...", dir)
 			if err := os.RemoveAll(dir); err != nil {
 				return fmt.Errorf("删除目录 %q 失败: %w", dir, err)
 			}

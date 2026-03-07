@@ -52,7 +52,7 @@ func parseToolCalls(data map[string]any) []providers.ToolCall {
 // convertInputToArgs 将 any 类型的 input 转换为 JSON 字节
 func convertInputToArgs(input any) []byte {
 	if input == nil {
-		return []byte("{}")
+		return []byte("")
 	}
 	if str, ok := input.(string); ok {
 		return []byte(str)
@@ -60,15 +60,7 @@ func convertInputToArgs(input any) []byte {
 	jsonBytes, err := json.Marshal(input)
 	if err != nil {
 		log.Warnf("转换 input 为 JSON 失败: %v", err)
-		return []byte("{}")
+		return []byte("")
 	}
 	return jsonBytes
-}
-
-// strPtr 返回字符串的指针
-func strPtr(s string) *string {
-	if s == "" {
-		return nil
-	}
-	return &s
 }

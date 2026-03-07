@@ -93,7 +93,7 @@ func (u *usageViewer) runDir(dir string) error {
 		return nil
 	})
 
-	log.Infof("查看完成！总凭证数量: %d, 成功：%d，失败：%d\n", successCount+failureCount, successCount, failureCount)
+	log.Infof("\n查看完成！总凭证数量: %d, 成功：%d，失败：%d\n", successCount+failureCount, successCount, failureCount)
 	return err
 }
 
@@ -119,7 +119,7 @@ func (u *usageViewer) runFile(filePath string) error {
 			return fmt.Errorf("写入用量信息文件失败: %w", err)
 		}
 
-		log.Infof("写入用量信息文件: %s\n", filepath.Join(u.outputDir, filepath.Base(filePath)+".usage.json"))
+		log.Infof("\n写入用量信息文件: %s\n", filepath.Join(u.outputDir, filepath.Base(filePath)+".usage.json"))
 		return nil
 	}
 	// 显示用量信息

@@ -1,15 +1,19 @@
 package providers
 
-import "time"
+import (
+	"time"
+
+	"github.com/nomand-zc/provider-client/utils"
+)
 
 // responseStateEnum 表示响应累积过程中的状态枚举
 type responseStateEnum int
 
 const (
-	emptyState   responseStateEnum = iota // 空状态
-	contentState                          // 正在累积文本内容
-	toolState                             // 正在累积工具调用
-	finishedState                         // 已完成
+	emptyState    responseStateEnum = iota // 空状态
+	contentState                           // 正在累积文本内容
+	toolState                              // 正在累积工具调用
+	finishedState                          // 已完成
 )
 
 // responseState 记录每个 Choice 的当前累积状态
@@ -158,29 +162,9 @@ func (acc *ResponseAccumulator) accumulateDelta(chunk *Response) bool {
 			if deltaTool.Type != "" {
 				tool.Type = deltaTool.Type
 			}
-			tool.Function.Name += deltaTool.Function.Name
+			tool.Index = utils.ToPtr(toolIndex)
+			tool.Function.Name = deltaTool.Function.Name
 			tool.Function.Arguments = append(tool.Function.Arguments, deltaTool.Function.Arguments...)
-		}
-
-		// 累积 Message 中的工具调用（非 Delta 方式）
-		if len(delta.Message.ToolCalls) > 0 && len(delta.Delta.ToolCalls) == 0 {
-			for _, msgTool := range delta.Message.ToolCalls {
-				toolIndex := 0
-				if msgTool.Index != nil {
-					toolIndex = *msgTool.Index
-				}
-				choice.Message.ToolCalls = expandToolCalls(choice.Message.ToolCalls, toolIndex)
-				tool := &choice.Message.ToolCalls[toolIndex]
-
-				if msgTool.ID != "" {
-					tool.ID = msgTool.ID
-				}
-				if msgTool.Type != "" {
-					tool.Type = msgTool.Type
-				}
-				tool.Function.Name += msgTool.Function.Name
-				tool.Function.Arguments = append(tool.Function.Arguments, msgTool.Function.Arguments...)
-			}
 		}
 	}
 
