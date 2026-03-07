@@ -148,26 +148,3 @@ func (c *Counter) CountTokensRange(ctx context.Context, messages []providers.Mes
 	}
 	return total, nil
 }
-
-// isMessageNotEmpty checks if the message contains any content that should result in at least 1 token.
-func isMessageNotEmpty(message providers.Message) bool {
-	// Check main content.
-	if len(message.Content) > 0 {
-		return true
-	}
-
-	// Check reasoning content.
-	if len(message.ReasoningContent) > 0 {
-		return true
-	}
-
-	// Check tool calls - any tool call with content should count.
-	for _, toolCall := range message.ToolCalls {
-		if toolCall.Type != "" || toolCall.ID != "" ||
-			toolCall.Function.Name != "" || toolCall.Function.Description != "" ||
-			len(toolCall.Function.Arguments) > 0 {
-			return true
-		}
-	}
-	return false
-}

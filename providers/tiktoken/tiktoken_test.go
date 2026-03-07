@@ -1,12 +1,3 @@
-//
-// Tencent is pleased to support the open source community by making trpc-agent-go available.
-//
-// Copyright (C) 2025 Tencent.  All rights reserved.
-//
-// trpc-agent-go is licensed under the Apache License Version 2.0.
-//
-//
-
 package tiktoken
 
 import (
@@ -14,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/nomand-zc/provider-client/providers"
 	"github.com/stretchr/testify/require"
 	"github.com/tiktoken-go/tokenizer"
-	"trpc.group/trpc-go/trpc-agent-go/model"
 )
 
 // mockCodec implements Codec interface for testing error conditions
@@ -64,7 +55,7 @@ func TestTiktokenCounter_CountTokens(t *testing.T) {
 	if err != nil {
 		t.Skip("tiktoken-go not available: ", err)
 	}
-	msg := model.NewUserMessage("Hello, world!")
+	msg := providers.NewUserMessage("Hello, world!")
 	used, err := counter.CountTokens(context.Background(), msg)
 	require.NoError(t, err)
 	require.Greater(t, used, 0)
@@ -75,7 +66,7 @@ func TestTiktokenCounter_ModelFallback(t *testing.T) {
 	if err != nil {
 		t.Skip("tiktoken-go not available: ", err)
 	}
-	msg := model.NewUserMessage("alpha beta gamma")
+	msg := providers.NewUserMessage("alpha beta gamma")
 	used, err := counter.CountTokens(context.Background(), msg)
 	require.NoError(t, err)
 	require.Greater(t, used, 0)
@@ -87,11 +78,11 @@ func TestTiktokenCounter_ContentPartsAndReasoning(t *testing.T) {
 		t.Skip("tiktoken-go not available: ", err)
 	}
 	text := "part text"
-	msg := model.Message{
-		Role:             model.RoleUser,
+	msg := providers.Message{
+		Role:             providers.RoleUser,
 		Content:          "main",
 		ReasoningContent: "think",
-		ContentParts:     []model.ContentPart{{Type: model.ContentTypeText, Text: &text}},
+		ContentParts:     []providers.ContentPart{{Type: providers.ContentTypeText, Text: &text}},
 	}
 	used, err := counter.CountTokens(context.Background(), msg)
 	require.NoError(t, err)
@@ -103,7 +94,7 @@ func TestTiktokenCounter_EmptyMessage(t *testing.T) {
 	if err != nil {
 		t.Skip("tiktoken-go not available: ", err)
 	}
-	msg := model.Message{}
+	msg := providers.Message{}
 	used, err := counter.CountTokens(context.Background(), msg)
 	require.NoError(t, err)
 	require.Equal(t, 0, used)
@@ -115,10 +106,10 @@ func TestTiktokenCounter_CountTokensRange(t *testing.T) {
 		t.Skip("tiktoken-go not available: ", err)
 	}
 
-	messages := []model.Message{
-		model.NewUserMessage("Hello"),
-		model.NewUserMessage("World"),
-		model.NewUserMessage("Test"),
+	messages := []providers.Message{
+		providers.NewUserMessage("Hello"),
+		providers.NewUserMessage("World"),
+		providers.NewUserMessage("Test"),
 	}
 
 	t.Run("valid range - all messages", func(t *testing.T) {
@@ -169,8 +160,8 @@ func TestTiktokenCounter_OnlyReasoningContent(t *testing.T) {
 	if err != nil {
 		t.Skip("tiktoken-go not available: ", err)
 	}
-	msg := model.Message{
-		Role:             model.RoleAssistant,
+	msg := providers.Message{
+		Role:             providers.RoleAssistant,
 		ReasoningContent: "Let me think about this carefully",
 	}
 	used, err := counter.CountTokens(context.Background(), msg)
@@ -185,11 +176,11 @@ func TestTiktokenCounter_OnlyContentParts(t *testing.T) {
 	}
 	text1 := "First part"
 	text2 := "Second part"
-	msg := model.Message{
-		Role: model.RoleUser,
-		ContentParts: []model.ContentPart{
-			{Type: model.ContentTypeText, Text: &text1},
-			{Type: model.ContentTypeText, Text: &text2},
+	msg := providers.Message{
+		Role: providers.RoleUser,
+		ContentParts: []providers.ContentPart{
+			{Type: providers.ContentTypeText, Text: &text1},
+			{Type: providers.ContentTypeText, Text: &text2},
 		},
 	}
 	used, err := counter.CountTokens(context.Background(), msg)
@@ -205,12 +196,12 @@ func TestTiktokenCounter_MultipleContentParts(t *testing.T) {
 	text1 := "Part one"
 	text2 := "Part two"
 	text3 := "Part three"
-	msg := model.Message{
-		Role: model.RoleUser,
-		ContentParts: []model.ContentPart{
-			{Type: model.ContentTypeText, Text: &text1},
-			{Type: model.ContentTypeText, Text: &text2},
-			{Type: model.ContentTypeText, Text: &text3},
+	msg := providers.Message{
+		Role: providers.RoleUser,
+		ContentParts: []providers.ContentPart{
+			{Type: providers.ContentTypeText, Text: &text1},
+			{Type: providers.ContentTypeText, Text: &text2},
+			{Type: providers.ContentTypeText, Text: &text3},
 		},
 	}
 	used, err := counter.CountTokens(context.Background(), msg)
@@ -224,12 +215,12 @@ func TestTiktokenCounter_ContentPartsWithNonText(t *testing.T) {
 		t.Skip("tiktoken-go not available: ", err)
 	}
 	text := "Text content"
-	msg := model.Message{
-		Role: model.RoleUser,
-		ContentParts: []model.ContentPart{
-			{Type: model.ContentTypeText, Text: &text},
-			{Type: model.ContentTypeImage, Image: &model.Image{URL: "https://example.com/image.png"}},
-			{Type: model.ContentTypeText, Text: nil}, // nil text should be skipped
+	msg := providers.Message{
+		Role: providers.RoleUser,
+		ContentParts: []providers.ContentPart{
+			{Type: providers.ContentTypeText, Text: &text},
+			{Type: providers.ContentTypeImage, Image: &providers.Image{URL: "https://example.com/image.png"}},
+			{Type: providers.ContentTypeText, Text: nil}, // nil text should be skipped
 		},
 	}
 	used, err := counter.CountTokens(context.Background(), msg)
@@ -243,12 +234,12 @@ func TestTiktokenCounter_AllContentTypes(t *testing.T) {
 		t.Skip("tiktoken-go not available: ", err)
 	}
 	text := "Additional text"
-	msg := model.Message{
-		Role:             model.RoleAssistant,
+	msg := providers.Message{
+		Role:             providers.RoleAssistant,
 		Content:          "Main content",
 		ReasoningContent: "Reasoning process",
-		ContentParts: []model.ContentPart{
-			{Type: model.ContentTypeText, Text: &text},
+		ContentParts: []providers.ContentPart{
+			{Type: providers.ContentTypeText, Text: &text},
 		},
 	}
 	used, err := counter.CountTokens(context.Background(), msg)
@@ -256,9 +247,9 @@ func TestTiktokenCounter_AllContentTypes(t *testing.T) {
 	require.Greater(t, used, 0)
 
 	// Verify it's counting all parts
-	mainTokens, _ := counter.CountTokens(context.Background(), model.Message{Content: "Main content"})
-	reasoningTokens, _ := counter.CountTokens(context.Background(), model.Message{ReasoningContent: "Reasoning process"})
-	partTokens, _ := counter.CountTokens(context.Background(), model.Message{ContentParts: []model.ContentPart{{Type: model.ContentTypeText, Text: &text}}})
+	mainTokens, _ := counter.CountTokens(context.Background(), providers.Message{Content: "Main content"})
+	reasoningTokens, _ := counter.CountTokens(context.Background(), providers.Message{ReasoningContent: "Reasoning process"})
+	partTokens, _ := counter.CountTokens(context.Background(), providers.Message{ContentParts: []providers.ContentPart{{Type: providers.ContentTypeText, Text: &text}}})
 
 	// Total should be approximately the sum (allowing for tokenization variations)
 	expectedApprox := mainTokens + reasoningTokens + partTokens
@@ -273,7 +264,7 @@ func TestTiktokenCounter_LongMessage(t *testing.T) {
 	longText := "This is a very long message that should result in a higher token count. " +
 		"The more text we add, the more tokens we should get. " +
 		"Token counting is an important feature for language models."
-	msg := model.NewUserMessage(longText)
+	msg := providers.NewUserMessage(longText)
 	used, err := counter.CountTokens(context.Background(), msg)
 	require.NoError(t, err)
 	require.Greater(t, used, 10) // Should have more than 10 tokens
@@ -285,7 +276,7 @@ func TestTiktokenCounter_DifferentModels(t *testing.T) {
 		if err != nil {
 			t.Skip("tiktoken-go not available: ", err)
 		}
-		msg := model.NewUserMessage("Hello")
+		msg := providers.NewUserMessage("Hello")
 		used, err := counter.CountTokens(context.Background(), msg)
 		require.NoError(t, err)
 		require.Greater(t, used, 0)
@@ -296,7 +287,7 @@ func TestTiktokenCounter_DifferentModels(t *testing.T) {
 		if err != nil {
 			t.Skip("tiktoken-go not available: ", err)
 		}
-		msg := model.NewUserMessage("Hello")
+		msg := providers.NewUserMessage("Hello")
 		used, err := counter.CountTokens(context.Background(), msg)
 		require.NoError(t, err)
 		require.Greater(t, used, 0)
@@ -307,7 +298,7 @@ func TestTiktokenCounter_DifferentModels(t *testing.T) {
 		if err != nil {
 			t.Skip("tiktoken-go not available: ", err)
 		}
-		msg := model.NewUserMessage("Hello")
+		msg := providers.NewUserMessage("Hello")
 		used, err := counter.CountTokens(context.Background(), msg)
 		require.NoError(t, err)
 		require.Greater(t, used, 0)
@@ -321,20 +312,20 @@ func TestTiktokenCounter_WithToolCalls(t *testing.T) {
 	}
 
 	// Test message with tool calls
-	toolCall := model.ToolCall{
+	toolCall := providers.ToolCall{
 		Type: "function",
 		ID:   "call_123",
-		Function: model.FunctionDefinitionParam{
+		Function: providers.FunctionDefinitionParam{
 			Name:        "get_weather",
 			Description: "Get the current weather",
 			Arguments:   []byte(`{"location": "Beijing"}`),
 		},
 	}
 
-	msg := model.Message{
-		Role:      model.RoleAssistant,
+	msg := providers.Message{
+		Role:      providers.RoleAssistant,
 		Content:   "I'll check the weather for you.",
-		ToolCalls: []model.ToolCall{toolCall},
+		ToolCalls: []providers.ToolCall{toolCall},
 	}
 
 	used, err := counter.CountTokens(context.Background(), msg)
@@ -342,8 +333,8 @@ func TestTiktokenCounter_WithToolCalls(t *testing.T) {
 	require.Greater(t, used, 0)
 
 	// Verify tool calls contribute to token count
-	contentOnlyMsg := model.Message{
-		Role:    model.RoleAssistant,
+	contentOnlyMsg := providers.Message{
+		Role:    providers.RoleAssistant,
 		Content: "I'll check the weather for you.",
 	}
 	contentTokens, _ := counter.CountTokens(context.Background(), contentOnlyMsg)
@@ -358,19 +349,19 @@ func TestTiktokenCounter_OnlyToolCalls(t *testing.T) {
 		t.Skip("tiktoken-go not available: ", err)
 	}
 
-	toolCall := model.ToolCall{
+	toolCall := providers.ToolCall{
 		Type: "function",
 		ID:   "call_456",
-		Function: model.FunctionDefinitionParam{
+		Function: providers.FunctionDefinitionParam{
 			Name:        "calculate",
 			Description: "Perform mathematical calculations",
 			Arguments:   []byte(`{"expression": "2+2"}`),
 		},
 	}
 
-	msg := model.Message{
-		Role:      model.RoleAssistant,
-		ToolCalls: []model.ToolCall{toolCall},
+	msg := providers.Message{
+		Role:      providers.RoleAssistant,
+		ToolCalls: []providers.ToolCall{toolCall},
 	}
 
 	used, err := counter.CountTokens(context.Background(), msg)
@@ -384,11 +375,11 @@ func TestTiktokenCounter_MultipleToolCalls(t *testing.T) {
 		t.Skip("tiktoken-go not available: ", err)
 	}
 
-	toolCalls := []model.ToolCall{
+	toolCalls := []providers.ToolCall{
 		{
 			Type: "function",
 			ID:   "call_weather",
-			Function: model.FunctionDefinitionParam{
+			Function: providers.FunctionDefinitionParam{
 				Name:        "get_weather",
 				Description: "Get weather information",
 				Arguments:   []byte(`{"location": "Shanghai"}`),
@@ -397,7 +388,7 @@ func TestTiktokenCounter_MultipleToolCalls(t *testing.T) {
 		{
 			Type: "function",
 			ID:   "call_time",
-			Function: model.FunctionDefinitionParam{
+			Function: providers.FunctionDefinitionParam{
 				Name:        "get_time",
 				Description: "Get current time",
 				Arguments:   []byte(`{"timezone": "UTC"}`),
@@ -405,8 +396,8 @@ func TestTiktokenCounter_MultipleToolCalls(t *testing.T) {
 		},
 	}
 
-	msg := model.Message{
-		Role:      model.RoleAssistant,
+	msg := providers.Message{
+		Role:      providers.RoleAssistant,
 		Content:   "Here are multiple tool calls:",
 		ToolCalls: toolCalls,
 	}
@@ -416,10 +407,10 @@ func TestTiktokenCounter_MultipleToolCalls(t *testing.T) {
 	require.Greater(t, used, 0)
 
 	// Compare with single tool call
-	singleToolMsg := model.Message{
-		Role:      model.RoleAssistant,
+	singleToolMsg := providers.Message{
+		Role:      providers.RoleAssistant,
 		Content:   "Here are multiple tool calls:",
-		ToolCalls: []model.ToolCall{toolCalls[0]},
+		ToolCalls: []providers.ToolCall{toolCalls[0]},
 	}
 	singleTokens, _ := counter.CountTokens(context.Background(), singleToolMsg)
 
@@ -434,10 +425,10 @@ func TestTiktokenCounter_EmptyToolCall(t *testing.T) {
 	}
 
 	// Test empty tool call
-	emptyToolCall := model.ToolCall{}
-	msg := model.Message{
-		Role:      model.RoleAssistant,
-		ToolCalls: []model.ToolCall{emptyToolCall},
+	emptyToolCall := providers.ToolCall{}
+	msg := providers.Message{
+		Role:      providers.RoleAssistant,
+		ToolCalls: []providers.ToolCall{emptyToolCall},
 	}
 
 	used, err := counter.CountTokens(context.Background(), msg)
@@ -452,15 +443,15 @@ func TestTiktokenCounter_ToolCallArgumentsOnly(t *testing.T) {
 	}
 
 	// Test tool call with only arguments
-	toolCall := model.ToolCall{
-		Function: model.FunctionDefinitionParam{
+	toolCall := providers.ToolCall{
+		Function: providers.FunctionDefinitionParam{
 			Arguments: []byte(`{"key": "value", "number": 123, "array": [1, 2, 3]}`),
 		},
 	}
 
-	msg := model.Message{
-		Role:      model.RoleAssistant,
-		ToolCalls: []model.ToolCall{toolCall},
+	msg := providers.Message{
+		Role:      providers.RoleAssistant,
+		ToolCalls: []providers.ToolCall{toolCall},
 	}
 
 	used, err := counter.CountTokens(context.Background(), msg)
@@ -474,8 +465,8 @@ func newWithCodec(codec tokenizer.Codec) *Counter {
 func TestTiktokenCounter_ContentEncodingError(t *testing.T) {
 	counter := newWithCodec(&mockCodec{shouldFail: true})
 
-	msg := model.Message{
-		Role:    model.RoleUser,
+	msg := providers.Message{
+		Role:    providers.RoleUser,
 		Content: "test content",
 	}
 
@@ -487,8 +478,8 @@ func TestTiktokenCounter_ContentEncodingError(t *testing.T) {
 func TestTiktokenCounter_ReasoningContentEncodingError(t *testing.T) {
 	counter := newWithCodec(&mockCodec{shouldFail: true})
 
-	msg := model.Message{
-		Role:             model.RoleAssistant,
+	msg := providers.Message{
+		Role:             providers.RoleAssistant,
 		ReasoningContent: "test reasoning",
 	}
 
@@ -501,10 +492,10 @@ func TestTiktokenCounter_ContentPartsEncodingError(t *testing.T) {
 	counter := newWithCodec(&mockCodec{shouldFail: true})
 
 	text := "test content part"
-	msg := model.Message{
-		Role: model.RoleUser,
-		ContentParts: []model.ContentPart{
-			{Type: model.ContentTypeText, Text: &text},
+	msg := providers.Message{
+		Role: providers.RoleUser,
+		ContentParts: []providers.ContentPart{
+			{Type: providers.ContentTypeText, Text: &text},
 		},
 	}
 
@@ -516,13 +507,13 @@ func TestTiktokenCounter_ContentPartsEncodingError(t *testing.T) {
 func TestTiktokenCounter_ToolCallTypeEncodingError(t *testing.T) {
 	counter := newWithCodec(&mockCodec{shouldFail: true})
 
-	toolCall := model.ToolCall{
+	toolCall := providers.ToolCall{
 		Type: "function",
 	}
 
-	msg := model.Message{
-		Role:      model.RoleAssistant,
-		ToolCalls: []model.ToolCall{toolCall},
+	msg := providers.Message{
+		Role:      providers.RoleAssistant,
+		ToolCalls: []providers.ToolCall{toolCall},
 	}
 
 	_, err := counter.CountTokens(context.Background(), msg)
@@ -533,13 +524,13 @@ func TestTiktokenCounter_ToolCallTypeEncodingError(t *testing.T) {
 func TestTiktokenCounter_ToolCallIDEncodingError(t *testing.T) {
 	counter := newWithCodec(&mockCodec{shouldFail: true})
 
-	toolCall := model.ToolCall{
+	toolCall := providers.ToolCall{
 		ID: "call_123",
 	}
 
-	msg := model.Message{
-		Role:      model.RoleAssistant,
-		ToolCalls: []model.ToolCall{toolCall},
+	msg := providers.Message{
+		Role:      providers.RoleAssistant,
+		ToolCalls: []providers.ToolCall{toolCall},
 	}
 
 	_, err := counter.CountTokens(context.Background(), msg)
@@ -550,15 +541,15 @@ func TestTiktokenCounter_ToolCallIDEncodingError(t *testing.T) {
 func TestTiktokenCounter_FunctionNameEncodingError(t *testing.T) {
 	counter := newWithCodec(&mockCodec{shouldFail: true})
 
-	toolCall := model.ToolCall{
-		Function: model.FunctionDefinitionParam{
+	toolCall := providers.ToolCall{
+		Function: providers.FunctionDefinitionParam{
 			Name: "test_function",
 		},
 	}
 
-	msg := model.Message{
-		Role:      model.RoleAssistant,
-		ToolCalls: []model.ToolCall{toolCall},
+	msg := providers.Message{
+		Role:      providers.RoleAssistant,
+		ToolCalls: []providers.ToolCall{toolCall},
 	}
 
 	_, err := counter.CountTokens(context.Background(), msg)
@@ -569,15 +560,15 @@ func TestTiktokenCounter_FunctionNameEncodingError(t *testing.T) {
 func TestTiktokenCounter_FunctionDescriptionEncodingError(t *testing.T) {
 	counter := newWithCodec(&mockCodec{shouldFail: true})
 
-	toolCall := model.ToolCall{
-		Function: model.FunctionDefinitionParam{
+	toolCall := providers.ToolCall{
+		Function: providers.FunctionDefinitionParam{
 			Description: "test description",
 		},
 	}
 
-	msg := model.Message{
-		Role:      model.RoleAssistant,
-		ToolCalls: []model.ToolCall{toolCall},
+	msg := providers.Message{
+		Role:      providers.RoleAssistant,
+		ToolCalls: []providers.ToolCall{toolCall},
 	}
 
 	_, err := counter.CountTokens(context.Background(), msg)
@@ -588,15 +579,15 @@ func TestTiktokenCounter_FunctionDescriptionEncodingError(t *testing.T) {
 func TestTiktokenCounter_FunctionArgumentsEncodingError(t *testing.T) {
 	counter := newWithCodec(&mockCodec{shouldFail: true})
 
-	toolCall := model.ToolCall{
-		Function: model.FunctionDefinitionParam{
+	toolCall := providers.ToolCall{
+		Function: providers.FunctionDefinitionParam{
 			Arguments: []byte(`{"key": "value"}`),
 		},
 	}
 
-	msg := model.Message{
-		Role:      model.RoleAssistant,
-		ToolCalls: []model.ToolCall{toolCall},
+	msg := providers.Message{
+		Role:      providers.RoleAssistant,
+		ToolCalls: []providers.ToolCall{toolCall},
 	}
 
 	_, err := counter.CountTokens(context.Background(), msg)
