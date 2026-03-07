@@ -58,12 +58,37 @@ func (p *kiroProvider) GenerateContent(ctx context.Context, creds credentials.Cr
 	if err != nil {
 		return nil, err
 	}
-	var resp *providers.Response
+
+	acc := &providers.ResponseAccumulator{}
 	for {
-		// TODO: 读取流信息，然后拼接成一条完整的响应
-		item, err := reader.Read(ctx)
-		
+		chunk, err := reader.Read(ctx)
+		if err != nil {
+			if errors.Is(err, queue.ErrQueueClosed) {
+				break
+			}
+			return nil, fmt.Errorf("failed to read stream response: %w", err)
+		}
+		if chunk == nil {
+			continue
+		}
+		if !acc.AddChunk(chunk) {
+			log.Warnf("[kiroProvider.GenerateContent] failed to accumulate chunk, id mismatch")
+			continue
+		}
+		// 如果 chunk 标记为完成，结束读取
+		if chunk.Done {
+			break
+		}
 	}
+
+	resp := acc.Response()
+	if resp == nil {
+		return nil, fmt.Errorf("no response received from stream")
+	}
+	// 将 Object 标记为非流式响应类型
+	resp.Object = "chat.completion"
+	resp.IsPartial = false
+	resp.Done = true
 	return resp, nil
 }
 
@@ -99,8 +124,8 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 	for key, value := range p.options.headerBuilder() {
 		request.Header.Set(key, value)
 	}
-	// request.Header.Set("Accept", "text/event-stream")
-	request.Header.Set("Accept", "application/json")
+	request.Header.Set("Accept", "text/event-stream")
+	// request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", kiroCreds.AccessToken))
 	request.Header.Set("amz-sdk-invocation-id", inv.ID)
 

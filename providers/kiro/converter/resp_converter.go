@@ -2,7 +2,6 @@ package converter
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
@@ -17,8 +16,7 @@ func ConvertResponse(_ context.Context, resp *parser.StreamMessage) (
 		return nil, nil
 	}
 
-	jsonData, _ := json.Marshal(resp)
-	log.Debugf("-----kiro response: %s, playload: %s", string(jsonData), string(resp.Payload))
+	log.Debugf("[kiro: ConvertResponse]response: %+v, playload: %s", *resp, string(resp.Payload))
 
 	messageType := resp.MessageType()
 	eventType := resp.EventType()
