@@ -49,3 +49,21 @@ type Request struct {
 
 	Tools []Tool `json:"tools,omitempty"` // Tools are not serialized, handled separately
 }
+
+// Tool is a tool that can be used by the model.
+type Tool struct {
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	Parameters  Schema `json:"parameters"`
+}
+
+// Schema is the schema of the tool's arguments.
+type Schema struct {
+	//  Type Specifies the data type (e.g., "object", "array", "string", "number")
+	Type        string   `json:"type,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Required    []string `json:"required,omitempty"`
+	// Properties of the arguments, each with its own schema
+	Properties map[string]*Schema `json:"properties,omitempty"`
+}

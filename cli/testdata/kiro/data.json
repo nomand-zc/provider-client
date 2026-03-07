@@ -3,26 +3,23 @@
     "stream": true,
     "tools": [
         {
-            "type": "function",
-            "function": {
-                "name": "get_weather",
-                "description": "查询指定城市的天气情况，包括温度、湿度、天气状况等信息",
+            "name": "get_weather",
+            "description": "查询指定城市的天气情况，包括温度、湿度、天气状况等信息",
+            "parameters": {
+                "type": "object",
                 "properties": {
-                    "type": "object",
-                    "properties": {
-                        "city": {
-                            "type": "string",
-                            "description": "要查询天气的城市名称，例如：北京、上海、广州"
-                        },
-                        "date": {
-                            "type": "string",
-                            "description": "要查询的日期，格式为 YYYY-MM-DD，默认为今天"
-                        }
+                    "city": {
+                        "type": "string",
+                        "description": "要查询天气的城市名称，例如：北京、上海、广州"
                     },
-                    "required": [
-                        "city"
-                    ]
-                }
+                    "date": {
+                        "type": "string",
+                        "description": "要查询的日期，格式为 YYYY-MM-DD，默认为今天"
+                    }
+                },
+                "required": [
+                    "city"
+                ]
             }
         }
     ],

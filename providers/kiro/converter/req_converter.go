@@ -320,11 +320,10 @@ func buildKiroTools(tools []providers.Tool) []Tool {
 	// 过滤 web_search / websearch
 	var filtered []providers.Tool
 	for _, tool := range tools {
-		decl := tool.Declaration()
-		if decl == nil {
+		if tool.Name == "" {
 			continue
 		}
-		name := strings.ToLower(decl.Name)
+		name := strings.ToLower(tool.Name)
 		if name == "web_search" || name == "websearch" {
 			continue
 		}
@@ -338,11 +337,10 @@ func buildKiroTools(tools []providers.Tool) []Tool {
 	// 过滤空描述 + 截断超长描述
 	var kiroTools []Tool
 	for _, tool := range filtered {
-		decl := tool.Declaration()
-		if decl == nil || decl.Name == "" {
+		if tool.Name == "" {
 			continue
 		}
-		desc := decl.Description
+		desc := tool.Description
 		if strings.TrimSpace(desc) == "" {
 			continue
 		}
@@ -351,10 +349,10 @@ func buildKiroTools(tools []providers.Tool) []Tool {
 		}
 		kiroTools = append(kiroTools, Tool{
 			ToolSpecification: ToolSpecification{
-				Name:        decl.Name,
+				Name:        tool.Name,
 				Description: desc,
 				InputSchema: InputSchema{
-					Json: convertSchema(decl.InputSchema),
+					Json: convertSchema(&tool.Parameters),
 				},
 			},
 		})

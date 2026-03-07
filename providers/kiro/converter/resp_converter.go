@@ -73,6 +73,8 @@ func ConvertResponse(_ context.Context, resp *parser.EventStreamMessage) (
 	messageType := resp.GetMessageType()
 	eventType := resp.GetEventType()
 
+	log.Debugf("kiro response: %s", string(resp.Payload))
+
 	// 根据消息类型分别处理
 	switch messageType {
 	case parser.MessageTypes.EVENT:
