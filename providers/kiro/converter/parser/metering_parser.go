@@ -30,7 +30,7 @@ func (p *meteringParser) Parse(ctx context.Context, msg *StreamMessage, opts ...
 	}
 
 	return &providers.Response{
-		Object:    "chat.completion.chunk",
+		Object:    providers.ObjectChatCompletion,
 		Created:   time.Now().Unix(),
 		Timestamp: time.Now(),
 		IsPartial: true,

@@ -36,7 +36,7 @@ func (p *completionChunkParser) Parse(ctx context.Context, msg *StreamMessage, o
 	}
 
 	resp := &providers.Response{
-		Object:    "chat.completion.chunk",
+		Object:    providers.ObjectChatCompletion,
 		Created:   time.Now().Unix(),
 		Timestamp: time.Now(),
 		IsPartial: true,

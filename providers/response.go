@@ -4,6 +4,13 @@ import (
 	"time"
 )
 
+const (
+	// ObjectChatCompletion 非流式响应的 Object 类型
+	ObjectChatCompletion = "chat.completion"
+	// ObjectChatCompletionChunk 流式响应的 Object 类型
+	ObjectChatCompletionChunk = "chat.completion.chunk"
+)
+
 // Choice represents a single completion choice.
 type Choice struct {
 	// Index is the index of the choice.

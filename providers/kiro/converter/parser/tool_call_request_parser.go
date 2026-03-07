@@ -59,7 +59,7 @@ func (p *toolCallRequestParser) Parse(ctx context.Context, msg *StreamMessage, o
 	}
 
 	return &providers.Response{
-		Object:    "chat.completion.chunk",
+		Object:    providers.ObjectChatCompletion,
 		Created:   time.Now().Unix(),
 		Timestamp: time.Now(),
 		IsPartial: false,

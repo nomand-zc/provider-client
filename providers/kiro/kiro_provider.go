@@ -27,11 +27,6 @@ const (
 	defaultQueueSize = 100
 	// 事件流解码 payload 缓冲区大小
 	defaultPayloadBufSize = 10 * 1024
-
-	// objectChatCompletion 非流式响应的 Object 类型
-	objectChatCompletion = "chat.completion"
-	// objectChatCompletionChunk 流式响应的 Object 类型
-	objectChatCompletionChunk = "chat.completion.chunk"
 )
 
 type kiroProvider struct {
@@ -93,7 +88,7 @@ func (p *kiroProvider) GenerateContent(ctx context.Context, creds credentials.Cr
 		return nil, fmt.Errorf("no response received from stream")
 	}
 	// 将 Object 标记为非流式响应类型
-	resp.Object = objectChatCompletion
+	resp.Object = providers.ObjectChatCompletion
 	resp.IsPartial = false
 	resp.Done = true
 	return resp, nil
@@ -220,7 +215,7 @@ func (p *kiroProvider) handleStreamEvent(ctx context.Context, inv *providers.Inv
 		finishReason := "stop"
 		finalResp := &providers.Response{
 			ID:        inv.ID,
-		Object:    objectChatCompletionChunk,
+			Object:    providers.ObjectChatCompletionChunk,
 			Created:   time.Now().Unix(),
 			Timestamp: time.Now(),
 			Done:      true,

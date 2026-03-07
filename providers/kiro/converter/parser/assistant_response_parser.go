@@ -37,7 +37,7 @@ func (p *assistantResponseParser) Parse(ctx context.Context, msg *StreamMessage,
 			return nil, nil
 		}
 		return &providers.Response{
-			Object:    "chat.completion.chunk",
+			Object:    providers.ObjectChatCompletionChunk,
 			Created:   time.Now().Unix(),
 			Timestamp: time.Now(),
 			IsPartial: true,
@@ -60,7 +60,7 @@ func (p *assistantResponseParser) Parse(ctx context.Context, msg *StreamMessage,
 	}
 
 	return &providers.Response{
-		Object:    "chat.completion.chunk",
+		Object:    providers.ObjectChatCompletionChunk,
 		Created:   time.Now().Unix(),
 		Timestamp: time.Now(),
 		IsPartial: true,
@@ -112,7 +112,7 @@ func (p *assistantResponseParser) parseToolCall(ctx context.Context, msg *Stream
 	}
 
 	return &providers.Response{
-		Object:    "chat.completion.chunk",
+		Object:    providers.ObjectChatCompletion,
 		Created:   time.Now().Unix(),
 		Timestamp: time.Now(),
 		IsPartial: !evt.Stop,

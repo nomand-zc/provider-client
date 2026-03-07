@@ -43,7 +43,7 @@ func (p *exceptionParser) Parse(ctx context.Context, msg *StreamMessage, opts ..
 	}
 
 	return &providers.Response{
-		Object:    "chat.completion.chunk",
+		Object:    providers.ObjectChatCompletion,
 		Created:   time.Now().Unix(),
 		Timestamp: time.Now(),
 		Done:      true,

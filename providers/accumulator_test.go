@@ -448,9 +448,9 @@ func TestAccumulate_UsageWithDetails(t *testing.T) {
 			CompletionTokens: 30,
 			TotalTokens:      80,
 			PromptTokensDetails: PromptTokensDetails{
-				CachedTokens:       20,
+				CachedTokens:        20,
 				CacheCreationTokens: 5,
-				CacheReadTokens:    15,
+				CacheReadTokens:     15,
 			},
 			Credit: 0.01,
 		},
@@ -510,7 +510,7 @@ func TestAccumulate_Metadata(t *testing.T) {
 	fp := "fp_abc123"
 	chunk := &Response{
 		ID:                "resp-1",
-		Object:            "chat.completion.chunk",
+		Object:            ObjectChatCompletion,
 		Model:             "gpt-4-turbo",
 		Created:           1700000000,
 		SystemFingerprint: &fp,
@@ -520,7 +520,7 @@ func TestAccumulate_Metadata(t *testing.T) {
 	require.True(t, ok)
 
 	resp := acc.Response()
-	require.Equal(t, "chat.completion.chunk", resp.Object)
+	require.Equal(t, ObjectChatCompletion, resp.Object)
 	require.Equal(t, "gpt-4-turbo", resp.Model)
 	require.Equal(t, int64(1700000000), resp.Created)
 	require.NotNil(t, resp.SystemFingerprint)
@@ -884,7 +884,7 @@ func TestAccumulate_FullStreamSimulation(t *testing.T) {
 		// chunk 1: 角色和模型信息
 		{
 			ID:                "chatcmpl-123",
-			Object:            "chat.completion.chunk",
+			Object:            ObjectChatCompletion,
 			Created:           1700000000,
 			Model:             "gpt-4-turbo",
 			SystemFingerprint: &fp,
@@ -1004,10 +1004,10 @@ func TestAccumulate_FullToolCallStreamSimulation(t *testing.T) {
 
 func TestExpandChoices(t *testing.T) {
 	tests := []struct {
-		name     string
-		initial  []Choice
-		index    int
-		wantLen  int
+		name    string
+		initial []Choice
+		index   int
+		wantLen int
 	}{
 		{
 			name:    "空切片扩展到索引0",
@@ -1463,8 +1463,8 @@ func TestUpdate_DefaultElseFinishedState(t *testing.T) {
 			{
 				Index:        0,
 				FinishReason: strPtr("stop"),
-				Delta:        Message{},   // Delta 空
-				Message:      Message{},   // Message 无 ToolCalls
+				Delta:        Message{}, // Delta 空
+				Message:      Message{}, // Message 无 ToolCalls
 			},
 		},
 		Done: false, // 非 Done

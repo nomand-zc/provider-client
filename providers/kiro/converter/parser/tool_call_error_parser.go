@@ -30,7 +30,7 @@ func (p *toolCallErrorParser) Parse(ctx context.Context, msg *StreamMessage, opt
 
 	errMsg := fmt.Sprintf("tool_call_error: %s (tool_call_id: %s)", errorInfo.Error, errorInfo.ToolCallID)
 	return &providers.Response{
-		Object:    "chat.completion.chunk",
+		Object:    providers.ObjectChatCompletion,
 		Created:   time.Now().Unix(),
 		Timestamp: time.Now(),
 		Done:      true,

@@ -29,7 +29,7 @@ func (p *completionParser) Parse(ctx context.Context, msg *StreamMessage, opts .
 	finishReason, _ := data["finish_reason"].(string)
 
 	resp := &providers.Response{
-		Object:    "chat.completion.chunk",
+		Object:    providers.ObjectChatCompletion,
 		Created:   time.Now().Unix(),
 		Timestamp: time.Now(),
 		IsPartial: false,
