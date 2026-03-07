@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
 	"github.com/nomand-zc/provider-client/providers/kiro/converter/parser"
@@ -12,7 +11,7 @@ import (
 
 // ConvertResponse 将 Kiro CodeWhisperer 响应转换为通用响应格式
 // 通过 parser 注册器根据 messageType 和 eventType 获取对应的解析器来处理
-func ConvertResponse(_ context.Context, resp *eventstream.Message) (
+func ConvertResponse(_ context.Context, resp *parser.StreamMessage) (
 	*providers.Response, error) {
 	if resp == nil {
 		return nil, nil
@@ -21,8 +20,8 @@ func ConvertResponse(_ context.Context, resp *eventstream.Message) (
 	jsonData, _ := json.Marshal(resp)
 	log.Debugf("-----kiro response: %s, playload: %s", string(jsonData), string(resp.Payload))
 
-	messageType := parser.GetMessageTypeFromHeaders(resp.Headers)
-	eventType := parser.GetEventTypeFromHeaders(resp.Headers)
+	messageType := resp.MessageType()
+	eventType := resp.EventType()
 
 	// 优先尝试 messageType+eventType 组合查找（适用于 event 类型消息）
 	p := parser.Get(messageType, eventType)

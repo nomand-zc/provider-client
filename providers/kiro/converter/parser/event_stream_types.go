@@ -35,9 +35,11 @@ const (
 	EventTypeToolUseEvent           = "toolUseEvent"
 )
 
-// GetMessageTypeFromHeaders 从头部提取消息类型
-func GetMessageTypeFromHeaders(headers eventstream.Headers) string {
-	if v := headers.Get(":message-type"); v != nil {
+// StreamMessage 流式消息
+type StreamMessage eventstream.Message
+
+func (m StreamMessage) MessageType() string {
+	if v := m.Headers.Get(":message-type"); v != nil {
 		if sv, ok := v.(eventstream.StringValue); ok {
 			return string(sv)
 		}
@@ -45,9 +47,9 @@ func GetMessageTypeFromHeaders(headers eventstream.Headers) string {
 	return MessageTypeEvent // 默认为事件类型
 }
 
-// GetEventTypeFromHeaders 从头部提取事件类型
-func GetEventTypeFromHeaders(headers eventstream.Headers) string {
-	if v := headers.Get(":event-type"); v != nil {
+// EventType 事件类型
+func (m StreamMessage) EventType() string {
+	if v := m.Headers.Get(":event-type"); v != nil {
 		if sv, ok := v.(eventstream.StringValue); ok {
 			return string(sv)
 		}
@@ -55,12 +57,27 @@ func GetEventTypeFromHeaders(headers eventstream.Headers) string {
 	return ""
 }
 
-// GetContentTypeFromHeaders 从头部提取内容类型
-func GetContentTypeFromHeaders(headers eventstream.Headers) string {
-	if v := headers.Get(":content-type"); v != nil {
+// GetContentType 从头部提取内容类型
+func (m StreamMessage) GetContentType() string {
+	if v := m.Headers.Get(":content-type"); v != nil {
 		if sv, ok := v.(eventstream.StringValue); ok {
 			return string(sv)
 		}
 	}
 	return "application/json" // 默认为JSON
+}
+
+// IsMetricMessage 是否为统计信息消息
+func (m StreamMessage) IsMetricMessage() bool {
+	return m.MessageType() == MessageTypeEvent && m.EventType() == EventTypeMeteringEvent
+}
+
+// IsContextUsageMessage 是否为上下文使用量消息
+func (m StreamMessage) IsContextUsageMessage() bool {
+	return m.MessageType() == MessageTypeEvent && m.EventType() == EventTypeContextUsageEvent
+}
+
+// ShouldSendMessage 是否应该发送消息
+func (m StreamMessage) ShouldSendMessage() bool {
+	return !m.IsMetricMessage() && !m.IsContextUsageMessage() && len(m.Payload) > 0
 }

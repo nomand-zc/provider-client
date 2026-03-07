@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream"
 	"github.com/nomand-zc/provider-client/providers"
 )
 
@@ -19,7 +18,7 @@ func init() {
 func (p *toolCallErrorParser) MessageType() string { return MessageTypeEvent }
 func (p *toolCallErrorParser) EventType() string   { return EventTypeToolCallError }
 
-func (p *toolCallErrorParser) Parse(msg *eventstream.Message) (*providers.Response, error) {
+func (p *toolCallErrorParser) Parse(msg *StreamMessage) (*providers.Response, error) {
 	var errorInfo struct {
 		ToolCallID string `json:"tool_call_id"`
 		Error      string `json:"error"`

@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
 )
@@ -20,7 +19,7 @@ func init() {
 func (p *assistantResponseParser) MessageType() string { return MessageTypeEvent }
 func (p *assistantResponseParser) EventType() string   { return EventTypeAssistantResponseEvent }
 
-func (p *assistantResponseParser) Parse(msg *eventstream.Message) (*providers.Response, error) {
+func (p *assistantResponseParser) Parse(msg *StreamMessage) (*providers.Response, error) {
 	payloadStr := string(msg.Payload)
 
 	// 检查是否是工具调用事件
@@ -77,7 +76,7 @@ func (p *assistantResponseParser) Parse(msg *eventstream.Message) (*providers.Re
 }
 
 // parseToolCall 处理 assistantResponseEvent 中的工具调用
-func (p *assistantResponseParser) parseToolCall(msg *eventstream.Message) (*providers.Response, error) {
+func (p *assistantResponseParser) parseToolCall(msg *StreamMessage) (*providers.Response, error) {
 	var evt struct {
 		Name      string `json:"name"`
 		ToolUseId string `json:"toolUseId"`

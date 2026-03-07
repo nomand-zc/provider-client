@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
 )
@@ -19,7 +18,7 @@ func init() {
 func (p *errorParser) MessageType() string { return MessageTypeError }
 func (p *errorParser) EventType() string   { return "" }
 
-func (p *errorParser) Parse(msg *eventstream.Message) (*providers.Response, error) {
+func (p *errorParser) Parse(msg *StreamMessage) (*providers.Response, error) {
 	var errorData map[string]any
 	if len(msg.Payload) > 0 {
 		if err := json.Unmarshal(msg.Payload, &errorData); err != nil {

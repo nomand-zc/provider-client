@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
 )
@@ -20,7 +19,7 @@ func init() {
 func (p *meteringParser) MessageType() string { return MessageTypeEvent }
 func (p *meteringParser) EventType() string   { return EventTypeMeteringEvent }
 
-func (p *meteringParser) Parse(msg *eventstream.Message) (*providers.Response, error) {
+func (p *meteringParser) Parse(msg *StreamMessage) (*providers.Response, error) {
 	var data struct {
 		Unit       string  `json:"unit"`
 		UnitPlural string  `json:"unitPlural"`

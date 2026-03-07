@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream"
 	"github.com/nomand-zc/provider-client/providers"
 )
 
@@ -19,7 +18,7 @@ func init() {
 func (p *completionParser) MessageType() string { return MessageTypeEvent }
 func (p *completionParser) EventType() string   { return EventTypeCompletion }
 
-func (p *completionParser) Parse(msg *eventstream.Message) (*providers.Response, error) {
+func (p *completionParser) Parse(msg *StreamMessage) (*providers.Response, error) {
 	var data map[string]any
 	if err := json.Unmarshal(msg.Payload, &data); err != nil {
 		return nil, fmt.Errorf("解析 completion 事件载荷失败: %w", err)

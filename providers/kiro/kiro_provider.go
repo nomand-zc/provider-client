@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream"
 	"github.com/google/uuid"
@@ -16,6 +17,7 @@ import (
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
 	"github.com/nomand-zc/provider-client/providers/kiro/converter"
+	"github.com/nomand-zc/provider-client/providers/kiro/converter/parser"
 	"github.com/nomand-zc/provider-client/queue"
 )
 
@@ -57,8 +59,17 @@ func (p *kiroProvider) GenerateContent(ctx context.Context, creds credentials.Cr
 // GenerateContentStream generates content in a stream.
 func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credentials.Credentials, 
 	req providers.Request) (queue.Reader[*providers.Response], error){
-	kiroCreds := creds.(*kirocreds.Credentials)
+	// 1. 初始化调用上下文
+	ctx, inv := providers.EnsureInvocationContext(ctx)
+	inputTokens, err := p.options.tokenConter.CountTokensRange(ctx, req.Messages, 0, len(req.Messages))
+	if err != nil {
+		// token 计算失败
+		return nil, fmt.Errorf("failed to calculate tokens: %w", err)
+	}
+	inv.Usage.PromptTokens = inputTokens
 
+	// 2. 构建请求信息
+	kiroCreds := creds.(*kirocreds.Credentials)
 	url := fmt.Sprintf(p.options.url, kiroCreds.Region)
 	cwReq := converter.ConvertRequest(ctx, req)
 	if kiroCreds.AuthMethod == kirocreds.AuthMethodSocial && kiroCreds.ProfileArn != "" {
@@ -80,6 +91,7 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", kiroCreds.AccessToken))
 	request.Header.Set("amz-sdk-invocation-id", uuid.NewString())
 
+	// 3. 发送请求, 并检查状态码
 	resp, err := p.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -94,31 +106,77 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 		}
 	}
 
+	// 4. 解码流式事件内容
+	return p.handlerStreamEvent(ctx, inv, resp.Body), nil
+}
+
+func (p *kiroProvider) handlerStreamEvent(ctx context.Context, inv *providers.Invocation, 
+	respBody io.ReadCloser) queue.Reader[*providers.Response] {
 	chainQueue := queue.NewChanQueue[*providers.Response](defaultQueueSize)
 	decoder := eventstream.NewDecoder()
 	payloadBuf := make([]byte, defaultPayloadBufSize)
 
 	go func() {
 		defer chainQueue.Close()
-		defer resp.Body.Close()
+		defer respBody.Close()
+
+		// 收集用量统计信息，最后随 stop 事件一起发送
+		var collectedUsage providers.Usage
+		collectedUsage.PromptTokens = inv.Usage.PromptTokens
+		var firstErr error
+
 		for {
 			// 重置 payloadBuf 以复用底层数组
 			payloadBuf = payloadBuf[0:0]
-			msg, err := decoder.Decode(resp.Body, payloadBuf)
+			e, err := decoder.Decode(respBody, payloadBuf)
 			if err != nil {
 				if err != io.EOF {
+					firstErr = err
 					log.Errorf("kiro stream decode error: %v", err)
 				}
-				return
+				break
 			}
 
+			msg := parser.StreamMessage(e)
 			result, err := converter.ConvertResponse(ctx, &msg)
 			if err != nil || result == nil {
 				continue
 			}
-			chainQueue.Write(result)
+
+			// 如果是用量统计信息事件，收集起来而不直接发送
+			if msg.IsMetricMessage() && result.Usage != nil {
+				collectedUsage.Credit = result.Usage.Credit
+			}
+
+			if msg.ShouldSendMessage() {
+				chainQueue.Write(result)
+			}
 		}
+
+		// 发送带有 usage 信息的 stop 响应
+		collectedUsage.TotalTokens = collectedUsage.PromptTokens + collectedUsage.CompletionTokens
+		finishReason := "stop"
+		finalResp := &providers.Response{
+			Object:    "chat.completion.chunk",
+			Created:   time.Now().Unix(),
+			Timestamp: time.Now(),
+			Done:      true,
+			IsPartial: false,
+			Usage:     &collectedUsage,
+			Choices: []providers.Choice{
+				{
+					FinishReason: &finishReason,
+				},
+			},
+		}
+		if firstErr != nil {
+			finalResp.Error = &providers.ResponseError{
+				Message: firstErr.Error(),
+				Type:    "stream_parse_error",
+			}
+		}
+		chainQueue.Write(finalResp)
 	}()
 
-	return chainQueue, nil
+	return chainQueue
 }

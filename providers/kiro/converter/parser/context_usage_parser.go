@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
 )
@@ -19,7 +18,7 @@ func init() {
 func (p *contextUsageParser) MessageType() string { return MessageTypeEvent }
 func (p *contextUsageParser) EventType() string   { return EventTypeContextUsageEvent }
 
-func (p *contextUsageParser) Parse(msg *eventstream.Message) (*providers.Response, error) {
+func (p *contextUsageParser) Parse(msg *StreamMessage) (*providers.Response, error) {
 	var data struct {
 		ContextUsagePercentage float64 `json:"contextUsagePercentage"`
 	}

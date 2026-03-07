@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream"
 	"github.com/nomand-zc/provider-client/providers"
 )
 
@@ -19,7 +18,7 @@ func init() {
 func (p *toolUseParser) MessageType() string { return MessageTypeEvent }
 func (p *toolUseParser) EventType() string   { return EventTypeToolUseEvent }
 
-func (p *toolUseParser) Parse(msg *eventstream.Message) (*providers.Response, error) {
+func (p *toolUseParser) Parse(msg *StreamMessage) (*providers.Response, error) {
 	var evt struct {
 		Name      string `json:"name"`
 		ToolUseId string `json:"toolUseId"`

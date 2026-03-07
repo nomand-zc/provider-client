@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream"
 	"github.com/nomand-zc/provider-client/providers"
 )
 
@@ -19,7 +18,7 @@ func init() {
 func (p *toolCallRequestParser) MessageType() string { return MessageTypeEvent }
 func (p *toolCallRequestParser) EventType() string   { return EventTypeToolCallRequest }
 
-func (p *toolCallRequestParser) Parse(msg *eventstream.Message) (*providers.Response, error) {
+func (p *toolCallRequestParser) Parse(msg *StreamMessage) (*providers.Response, error) {
 	var data map[string]any
 	if err := json.Unmarshal(msg.Payload, &data); err != nil {
 		return nil, fmt.Errorf("解析 tool_call_request 事件载荷失败: %w", err)

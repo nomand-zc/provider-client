@@ -1,5 +1,10 @@
 package kiro
 
+import (
+	"github.com/nomand-zc/provider-client/providers"
+	"github.com/nomand-zc/provider-client/providers/tiktoken"
+)
+
 const (
 	DefaultRegion = "us-east-1"
 )
@@ -8,6 +13,14 @@ var defaultOptions = Options{
 	url:           "https://q.%s.amazonaws.com/generateAssistantResponse",
 	headerBuilder: DefaultHeaderBuilder,
 	defaultRegion: DefaultRegion,
+}
+
+func init() {
+	tokenConter, err := tiktoken.New("claude-sonnet-4.6")
+	if err != nil {
+		panic(err)
+	}
+	defaultOptions.tokenConter = tokenConter
 }
 
 // HeaderBuilder builds headers for the request.
@@ -38,6 +51,7 @@ type Options struct {
 	url           string
 	headerBuilder HeaderBuilder
 	defaultRegion string
+	tokenConter   providers.TokenCounter
 }
 
 // Option is a function that sets an option.

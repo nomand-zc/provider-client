@@ -106,8 +106,8 @@ func (s *streamer) run() error {
 		}
 
 		// 输出内容
-		rsp, _ := json.Marshal(response)
-		fmt.Println(string(rsp))
+		// rsp, _ := json.Marshal(response)
+		// fmt.Println(string(rsp))
 	}
 
 	log.Infof("\n流式生成完成")
