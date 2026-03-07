@@ -26,15 +26,10 @@ func ConvertResponse(_ context.Context, resp *eventstream.Message) (
 
 	// 优先尝试 messageType+eventType 组合查找（适用于 event 类型消息）
 	p := parser.Get(messageType, eventType)
-	if p == nil && eventType != "" {
-		// 对于未注册的 event 子类型，记录日志并忽略
-		log.Debugf("未注册的事件解析器: messageType=%s, eventType=%s", messageType, eventType)
-		return nil, nil
-	}
-
 	if p == nil {
-		// 对于完全未知的 messageType，记录警告
-		log.Warnf("未知消息类型: %s", messageType)
+		// 对于未注册的 event 子类型，记录日志并忽略
+		log.Warnf("未注册的事件解析器: messageType=%s, eventType=%s, payload: %s",
+			messageType, eventType, string(resp.Payload))
 		return nil, nil
 	}
 
