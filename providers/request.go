@@ -47,5 +47,5 @@ type Request struct {
 	// GenerationConfig contains the generation parameters.
 	GenerationConfig `json:"generation_config"`
 
-	Tools []Tool `json:"-"` // Tools are not serialized, handled separately
+	Tools []Tool `json:"tools,omitempty"` // Tools are not serialized, handled separately
 }

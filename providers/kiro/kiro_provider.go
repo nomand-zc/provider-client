@@ -65,6 +65,7 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf("[kiroProvider.GenerateContentStream] kiro request: %s", string(cwReqBody))
 	request, err := http.NewRequest("POST", url, bytes.NewReader(cwReqBody))
 	if err != nil {
 		return nil, err
@@ -104,6 +105,10 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 				return
 			}
 			resp, err := converter.ConvertResponse(ctx, event)
+
+			// jsonData, _ := json.Marshal(resp)
+			// log.Debugf("kiro response: %s, err: %v", string(jsonData), err)
+
 			if err != nil || resp == nil{
 				continue
 			}

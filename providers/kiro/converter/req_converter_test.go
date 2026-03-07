@@ -13,11 +13,6 @@ import (
 // 辅助函数
 // ============================================================
 
-// strPtr 返回字符串指针
-func strPtr(s string) *string {
-	return &s
-}
-
 // makeTextPart 构造文本类型的 ContentPart
 func makeTextPart(text string) providers.ContentPart {
 	return providers.ContentPart{

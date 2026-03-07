@@ -28,10 +28,10 @@ type Schema struct {
 	Properties map[string]*Schema `json:"properties,omitempty"`
 	// For array types, defines the schema of items in the array
 	Items *Schema `json:"items,omitempty"`
-	// AdditionalProperties: Controls whether properties not defined in Properties are allowed
-	AdditionalProperties any `json:"additionalProperties,omitempty"`
-	// Default value for the parameter
-	Default any `json:"default,omitempty"`
-	// Enum contains the list of allowed values for the parameter
-	Enum []any `json:"enum,omitempty"`
+	// // AdditionalProperties: Controls whether properties not defined in Properties are allowed
+	// AdditionalProperties any `json:"additionalProperties,omitempty"`
+	// // Default value for the parameter
+	// Default any `json:"default,omitempty"`
+	// // Enum contains the list of allowed values for the parameter
+	// Enum []any `json:"enum,omitempty"`
 }

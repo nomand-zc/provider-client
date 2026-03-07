@@ -1,5 +1,31 @@
 {
-    "model": "",
+    "model": "claude-haiku-4.5",
+    "stream": true,
+    "tools": [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_weather",
+                "description": "查询指定城市的天气情况，包括温度、湿度、天气状况等信息",
+                "properties": {
+                    "type": "object",
+                    "properties": {
+                        "city": {
+                            "type": "string",
+                            "description": "要查询天气的城市名称，例如：北京、上海、广州"
+                        },
+                        "date": {
+                            "type": "string",
+                            "description": "要查询的日期，格式为 YYYY-MM-DD，默认为今天"
+                        }
+                    },
+                    "required": [
+                        "city"
+                    ]
+                }
+            }
+        }
+    ],
     "messages": [
         {
             "role": "system",
@@ -7,7 +33,7 @@
         },
         {
             "role": "user",
-            "content": "请介绍一下人工智能的基本概念和发展历程。"
+            "content": "查询一下背景的明天的天气情况"
         }
     ],
     "generation_config": {
