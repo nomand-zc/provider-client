@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
-	"time"
 
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
@@ -36,21 +35,15 @@ func (p *assistantResponseParser) Parse(ctx context.Context, msg *StreamMessage,
 		if text == "" {
 			return nil, nil
 		}
-		return &providers.Response{
-			Object:    providers.ObjectChatCompletionChunk,
-			Created:   time.Now().Unix(),
-			Timestamp: time.Now(),
-			IsPartial: true,
-			Choices: []providers.Choice{
-				{
-					Index: 0,
-					Delta: providers.Message{
-						Role:    providers.RoleAssistant,
-						Content: text,
-					},
+		return providers.NewResponse(ctx,
+			providers.WithChoices(providers.Choice{
+				Index: 0,
+				Delta: providers.Message{
+					Role:    providers.RoleAssistant,
+					Content: text,
 				},
-			},
-		}, nil
+			}),
+		), nil
 	}
 
 	// 提取内容
@@ -59,21 +52,15 @@ func (p *assistantResponseParser) Parse(ctx context.Context, msg *StreamMessage,
 		return nil, nil
 	}
 
-	return &providers.Response{
-		Object:    providers.ObjectChatCompletionChunk,
-		Created:   time.Now().Unix(),
-		Timestamp: time.Now(),
-		IsPartial: true,
-		Choices: []providers.Choice{
-			{
-				Index: 0,
-				Delta: providers.Message{
-					Role:    providers.RoleAssistant,
-					Content: content,
-				},
+	return providers.NewResponse(ctx,
+		providers.WithChoices(providers.Choice{
+			Index: 0,
+			Delta: providers.Message{
+				Role:    providers.RoleAssistant,
+				Content: content,
 			},
-		},
-	}, nil
+		}),
+	), nil
 }
 
 // parseToolCall 处理 assistantResponseEvent 中的工具调用
@@ -111,20 +98,15 @@ func (p *assistantResponseParser) parseToolCall(ctx context.Context, msg *Stream
 		},
 	}
 
-	return &providers.Response{
-		Object:    providers.ObjectChatCompletion,
-		Created:   time.Now().Unix(),
-		Timestamp: time.Now(),
-		IsPartial: !evt.Stop,
-		Done:      false,
-		Choices: []providers.Choice{
-			{
-				Index: 0,
-				Delta: providers.Message{
-					Role:      providers.RoleAssistant,
-					ToolCalls: []providers.ToolCall{toolCall},
-				},
+	return providers.NewResponse(ctx,
+		providers.WithObject(providers.ObjectChatCompletion),
+		providers.WithIsPartial(!evt.Stop),
+		providers.WithChoices(providers.Choice{
+			Index: 0,
+			Delta: providers.Message{
+				Role:      providers.RoleAssistant,
+				ToolCalls: []providers.ToolCall{toolCall},
 			},
-		},
-	}, nil
+		}),
+	), nil
 }

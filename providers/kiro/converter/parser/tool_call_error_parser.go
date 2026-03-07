@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/nomand-zc/provider-client/providers"
 )
@@ -29,14 +28,13 @@ func (p *toolCallErrorParser) Parse(ctx context.Context, msg *StreamMessage, opt
 	}
 
 	errMsg := fmt.Sprintf("tool_call_error: %s (tool_call_id: %s)", errorInfo.Error, errorInfo.ToolCallID)
-	return &providers.Response{
-		Object:    providers.ObjectChatCompletion,
-		Created:   time.Now().Unix(),
-		Timestamp: time.Now(),
-		Done:      true,
-		Error: &providers.ResponseError{
+	return providers.NewResponse(ctx,
+		providers.WithObject(providers.ObjectChatCompletion),
+		providers.WithIsPartial(false),
+		providers.WithDone(true),
+		providers.WithResponseError(&providers.ResponseError{
 			Message: errMsg,
 			Type:    "tool_call_error",
-		},
-	}, nil
+		}),
+	), nil
 }

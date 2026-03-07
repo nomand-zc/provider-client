@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream"
 	"github.com/google/uuid"
@@ -204,8 +203,6 @@ func (p *kiroProvider) handleStreamEvent(ctx context.Context, inv *providers.Inv
 			}
 
 			if msg.ShouldSendMessage() {
-				// 修复ID
-				result.ID = inv.ID
 				chainQueue.Write(ctx, result)
 			}
 		}
@@ -213,20 +210,14 @@ func (p *kiroProvider) handleStreamEvent(ctx context.Context, inv *providers.Inv
 		// 发送带有 usage 信息的 stop 响应
 		collectedUsage.TotalTokens = collectedUsage.PromptTokens + collectedUsage.CompletionTokens
 		finishReason := "stop"
-		finalResp := &providers.Response{
-			ID:        inv.ID,
-			Object:    providers.ObjectChatCompletionChunk,
-			Created:   time.Now().Unix(),
-			Timestamp: time.Now(),
-			Done:      true,
-			IsPartial: false,
-			Usage:     &collectedUsage,
-			Choices: []providers.Choice{
-				{
-					FinishReason: &finishReason,
-				},
-			},
-		}
+		finalResp := providers.NewResponse(ctx,
+			providers.WithDone(true),
+			providers.WithIsPartial(false),
+			providers.WithUsage(&collectedUsage),
+			providers.WithChoices(providers.Choice{
+				FinishReason: &finishReason,
+			}),
+		)
 		if firstErr != nil {
 			finalResp.Error = &providers.ResponseError{
 				Message: firstErr.Error(),

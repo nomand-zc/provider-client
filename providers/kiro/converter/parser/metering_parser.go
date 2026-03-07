@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/nomand-zc/provider-client/providers"
 )
@@ -29,13 +28,10 @@ func (p *meteringParser) Parse(ctx context.Context, msg *StreamMessage, opts ...
 		return nil, fmt.Errorf("解析 meteringEvent 载荷失败: %w", err)
 	}
 
-	return &providers.Response{
-		Object:    providers.ObjectChatCompletion,
-		Created:   time.Now().Unix(),
-		Timestamp: time.Now(),
-		IsPartial: true,
-		Usage: &providers.Usage{
+	return providers.NewResponse(ctx,
+		providers.WithObject(providers.ObjectChatCompletion),
+		providers.WithUsage(&providers.Usage{
 			Credit: data.Usage,
-		},
-	}, nil
+		}),
+	), nil
 }

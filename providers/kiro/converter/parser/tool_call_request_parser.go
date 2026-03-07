@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/nomand-zc/provider-client/providers"
 )
@@ -58,20 +57,15 @@ func (p *toolCallRequestParser) Parse(ctx context.Context, msg *StreamMessage, o
 		},
 	}
 
-	return &providers.Response{
-		Object:    providers.ObjectChatCompletion,
-		Created:   time.Now().Unix(),
-		Timestamp: time.Now(),
-		IsPartial: false,
-		Done:      false,
-		Choices: []providers.Choice{
-			{
-				Index: 0,
-				Delta: providers.Message{
-					Role:      providers.RoleAssistant,
-					ToolCalls: []providers.ToolCall{toolCall},
-				},
+	return providers.NewResponse(ctx,
+		providers.WithObject(providers.ObjectChatCompletion),
+		providers.WithIsPartial(false),
+		providers.WithChoices(providers.Choice{
+			Index: 0,
+			Delta: providers.Message{
+				Role:      providers.RoleAssistant,
+				ToolCalls: []providers.ToolCall{toolCall},
 			},
-		},
-	}, nil
+		}),
+	), nil
 }

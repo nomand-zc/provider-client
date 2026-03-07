@@ -3,7 +3,6 @@ package parser
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
@@ -42,15 +41,14 @@ func (p *errorParser) Parse(ctx context.Context, msg *StreamMessage, opts ...Opt
 		}
 	}
 
-	return &providers.Response{
-		Object:    providers.ObjectChatCompletion,
-		Created:   time.Now().Unix(),
-		Timestamp: time.Now(),
-		Done:      true,
-		Error: &providers.ResponseError{
+	return providers.NewResponse(ctx,
+		providers.WithObject(providers.ObjectChatCompletion),
+		providers.WithIsPartial(false),
+		providers.WithDone(true),
+		providers.WithResponseError(&providers.ResponseError{
 			Message: errorMessage,
 			Type:    "error",
 			Code:    utils.ToPtr(errorCode),
-		},
-	}, nil
+		}),
+	), nil
 }

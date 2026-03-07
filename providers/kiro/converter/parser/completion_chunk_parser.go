@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/nomand-zc/provider-client/providers"
 )
@@ -35,21 +34,16 @@ func (p *completionChunkParser) Parse(ctx context.Context, msg *StreamMessage, o
 		textDelta = content
 	}
 
-	resp := &providers.Response{
-		Object:    providers.ObjectChatCompletion,
-		Created:   time.Now().Unix(),
-		Timestamp: time.Now(),
-		IsPartial: true,
-		Choices: []providers.Choice{
-			{
-				Index: 0,
-				Delta: providers.Message{
-					Role:    providers.RoleAssistant,
-					Content: textDelta,
-				},
+	resp := providers.NewResponse(ctx,
+		providers.WithObject(providers.ObjectChatCompletion),
+		providers.WithChoices(providers.Choice{
+			Index: 0,
+			Delta: providers.Message{
+				Role:    providers.RoleAssistant,
+				Content: textDelta,
 			},
-		},
-	}
+		}),
+	)
 
 	// 如果有完成原因，标记为最终响应
 	if finishReason != "" {

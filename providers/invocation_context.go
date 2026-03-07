@@ -5,6 +5,7 @@ import "context"
 // Invocation 调用上下文
 type Invocation struct {
 	ID    string `json:"id"`
+	Model string `json:"model"`
 	Usage Usage  `json:"usage"`
 }
 

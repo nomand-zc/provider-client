@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/nomand-zc/provider-client/providers"
 )
@@ -28,22 +27,18 @@ func (p *completionParser) Parse(ctx context.Context, msg *StreamMessage, opts .
 	content, _ := data["content"].(string)
 	finishReason, _ := data["finish_reason"].(string)
 
-	resp := &providers.Response{
-		Object:    providers.ObjectChatCompletion,
-		Created:   time.Now().Unix(),
-		Timestamp: time.Now(),
-		IsPartial: false,
-		Done:      true,
-		Choices: []providers.Choice{
-			{
-				Index: 0,
-				Delta: providers.Message{
-					Role:    providers.RoleAssistant,
-					Content: content,
-				},
+	resp := providers.NewResponse(ctx,
+		providers.WithObject(providers.ObjectChatCompletion),
+		providers.WithIsPartial(false),
+		providers.WithDone(true),
+		providers.WithChoices(providers.Choice{
+			Index: 0,
+			Delta: providers.Message{
+				Role:    providers.RoleAssistant,
+				Content: content,
 			},
-		},
-	}
+		}),
+	)
 
 	// 设置完成原因
 	if finishReason != "" {
