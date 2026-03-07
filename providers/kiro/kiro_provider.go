@@ -98,10 +98,12 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 	go func () {
 		defer chainQueue.Close()
 		defer resp.Body.Close()
-		for !reader.Closed() {
+		for {
 			event, err := reader.Read()
-			if err != nil && !errors.Is(err, queue.ErrQueueClosed) {
-				log.Errorf("kiro stream reader error: %v", err)
+			if err != nil {
+				if !errors.Is(err, queue.ErrQueueClosed) {
+					log.Errorf("kiro stream reader error: %v", err)
+				}
 				return
 			}
 			resp, err := converter.ConvertResponse(ctx, event)

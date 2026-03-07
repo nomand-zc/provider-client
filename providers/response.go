@@ -33,6 +33,9 @@ type Usage struct {
 
 	// PromptTokensDetails is the details of the prompt tokens.
 	PromptTokensDetails PromptTokensDetails `json:"prompt_tokens_details"`
+
+	// Credit is the credit used for this response.
+	Credit float64 `json:"credit"`
 }
 
 // PromptTokensDetails is the details of the prompt tokens.
@@ -114,6 +117,7 @@ func (rsp *Response) Clone() *Response {
 			CompletionTokens:    rsp.Usage.CompletionTokens,
 			TotalTokens:         rsp.Usage.TotalTokens,
 			PromptTokensDetails: rsp.Usage.PromptTokensDetails,
+			Credit:              rsp.Usage.Credit,
 		}
 	}
 	// Deep copy Error if present.

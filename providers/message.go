@@ -36,7 +36,7 @@ func (r Role) IsValid() bool {
 // Message represents a single message in a conversation.
 type Message struct {
 	// Role is the role of the message author.
-	Role Role `json:"role"`
+	Role Role `json:"role,omitempty"`
 	// Content is the message content.
 	Content string `json:"content,omitempty"`
 	// ContentParts is the content parts for multimodal messages.

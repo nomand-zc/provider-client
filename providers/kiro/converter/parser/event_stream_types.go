@@ -94,6 +94,10 @@ var EventTypes = struct {
 	SESSION_START string
 	SESSION_END   string
 
+	// 统计信息
+	METERING_EVENT      string
+	CONTEXT_USAGE_EVENT string
+
 	// 兼容旧格式
 	ASSISTANT_RESPONSE_EVENT string
 	TOOL_USE_EVENT           string
@@ -109,6 +113,9 @@ var EventTypes = struct {
 
 	SESSION_START: "session_start",
 	SESSION_END:   "session_end",
+
+	METERING_EVENT:      "meteringEvent",
+	CONTEXT_USAGE_EVENT: "contextUsageEvent",
 
 	ASSISTANT_RESPONSE_EVENT: "assistantResponseEvent",
 	TOOL_USE_EVENT:           "toolUseEvent",

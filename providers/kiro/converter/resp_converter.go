@@ -67,13 +67,11 @@ func ConvertResponse(_ context.Context, resp *parser.EventStreamMessage) (
 		return nil, nil
 	}
 
-	// jsonData, _ := json.Marshal(resp)
-	// log.Debugf("kiro response: %s", string(jsonData))
+	jsonData, _ := json.Marshal(resp)
+	log.Debugf("-----kiro response: %s, playload: %s", string(jsonData), string(resp.Payload))
 
 	messageType := resp.GetMessageType()
 	eventType := resp.GetEventType()
-
-	log.Debugf("kiro response: %s", string(resp.Payload))
 
 	// 根据消息类型分别处理
 	switch messageType {
@@ -104,6 +102,10 @@ func convertEventMessage(msg *parser.EventStreamMessage, eventType string) (*pro
 		return convertToolUseEvent(msg)
 	case parser.EventTypes.TOOL_CALL_ERROR:
 		return convertToolCallErrorEvent(msg)
+	case parser.EventTypes.METERING_EVENT:
+		return convertMeteringEvent(msg)
+	case parser.EventTypes.CONTEXT_USAGE_EVENT:
+		return convertContextUsageEvent(msg)
 	case parser.EventTypes.SESSION_START, parser.EventTypes.SESSION_END:
 		// 会话管理事件，不需要转换为 Response
 		log.Debugf("跳过会话管理事件: %s", eventType)
@@ -378,6 +380,45 @@ func convertToolUseEvent(msg *parser.EventStreamMessage) (*providers.Response, e
 			},
 		},
 	}, nil
+}
+
+// convertMeteringEvent 处理计量事件
+func convertMeteringEvent(msg *parser.EventStreamMessage) (*providers.Response, error) {
+	var data struct {
+		Unit       string  `json:"unit"`
+		UnitPlural string  `json:"unitPlural"`
+		Usage      float64 `json:"usage"`
+	}
+	if err := json.Unmarshal(msg.Payload, &data); err != nil {
+		return nil, fmt.Errorf("解析 meteringEvent 载荷失败: %w", err)
+	}
+
+	log.Debugf("计量事件: unit=%s, usage=%f", data.Unit, data.Usage)
+
+	return &providers.Response{
+		Object:    "chat.completion.chunk",
+		Created:   time.Now().Unix(),
+		Timestamp: time.Now(),
+		IsPartial: true,
+		Usage: &providers.Usage{
+			Credit: data.Usage,
+		},
+	}, nil
+}
+
+// convertContextUsageEvent 处理上下文使用量事件
+func convertContextUsageEvent(msg *parser.EventStreamMessage) (*providers.Response, error) {
+	var data struct {
+		ContextUsagePercentage float64 `json:"contextUsagePercentage"`
+	}
+	if err := json.Unmarshal(msg.Payload, &data); err != nil {
+		return nil, fmt.Errorf("解析 contextUsageEvent 载荷失败: %w", err)
+	}
+
+	log.Debugf("上下文使用量事件: percentage=%f%%", data.ContextUsagePercentage)
+
+	// 上下文使用量为信息性事件，不需要转换为用户可见的响应
+	return nil, nil
 }
 
 // convertToolCallErrorEvent 处理工具调用错误事件
