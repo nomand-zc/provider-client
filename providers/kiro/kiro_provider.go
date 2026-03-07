@@ -110,7 +110,13 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 	// 2. 构建请求信息
 	kiroCreds := creds.(*kirocreds.Credentials)
 	url := fmt.Sprintf(p.options.url, kiroCreds.Region)
-	cwReq := converter.ConvertRequest(ctx, req)
+	cwReq, err := converter.ConvertRequest(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert request: %w", err)
+	}
+	if cwReq == nil {
+		return nil, fmt.Errorf("request was filtered out during conversion")
+	}
 	if kiroCreds.AuthMethod == kirocreds.AuthMethodSocial && kiroCreds.ProfileArn != "" {
 		cwReq.ProfileArn = kiroCreds.ProfileArn
 	}

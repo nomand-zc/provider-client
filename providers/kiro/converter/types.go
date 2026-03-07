@@ -5,7 +5,7 @@ import "github.com/nomand-zc/provider-client/providers/kiro/converter/builder/ty
 // 以下类型别名将 types 子包的类型重新导出到 converter 包
 // 保持外部调用方的兼容性，无需修改任何引用 converter.Xxx 的代码
 
-type Request = types.Request
+type KiroRequest = types.Request
 type ConversationState = types.ConversationState
 type CurrentMessage = types.CurrentMessage
 type UserInputMessage = types.UserInputMessage

@@ -80,28 +80,37 @@ func newReq(model string, messages ...providers.Message) providers.Request {
 // 任务 2：空输入与 nil 返回测试
 // ============================================================
 
-// TestConvertRequest_EmptyMessages 传入空消息列表，应返回 nil
+// TestConvertRequest_EmptyMessages 传入空消息列表，应返回 error
 func TestConvertRequest_EmptyMessages(t *testing.T) {
 	req := providers.Request{Model: "claude-sonnet-4.5", Messages: []providers.Message{}}
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err == nil {
+		t.Error("期望返回 error，实际 error 为 nil")
+	}
 	if result != nil {
 		t.Errorf("期望返回 nil，实际返回 %+v", result)
 	}
 }
 
-// TestConvertRequest_OnlySystemMessages 仅含 system 消息，应返回 nil
+// TestConvertRequest_OnlySystemMessages 仅含 system 消息，应返回 (nil, nil)（正常提前退出）
 func TestConvertRequest_OnlySystemMessages(t *testing.T) {
 	req := newReq("claude-sonnet-4.5", makeSystemMsg("你是一个助手"))
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Errorf("期望 error 为 nil，实际 %v", err)
+	}
 	if result != nil {
 		t.Errorf("期望返回 nil，实际返回 %+v", result)
 	}
 }
 
-// TestConvertRequest_LastAssistantIsBrace_BecomesEmpty 唯一消息为 content="{" 的 assistant 消息，预处理后为空，应返回 nil
+// TestConvertRequest_LastAssistantIsBrace_BecomesEmpty 唯一消息为 content="{" 的 assistant 消息，预处理后为空，应返回 (nil, nil)
 func TestConvertRequest_LastAssistantIsBrace_BecomesEmpty(t *testing.T) {
 	req := newReq("claude-sonnet-4.5", makeAssistantMsg("{"))
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Errorf("期望 error 为 nil，实际 %v", err)
+	}
 	if result != nil {
 		t.Errorf("期望返回 nil，实际返回 %+v", result)
 	}
@@ -114,7 +123,10 @@ func TestConvertRequest_LastAssistantIsBrace_BecomesEmpty(t *testing.T) {
 // TestConvertRequest_BasicStructure 传入单条 user 消息，验证基础结构字段
 func TestConvertRequest_BasicStructure(t *testing.T) {
 	req := newReq("claude-sonnet-4.5", makeUserMsg("hello"))
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -273,7 +285,10 @@ func TestConvertRequest_SystemPrompt_MergedWithFirstUser(t *testing.T) {
 		makeAssistantMsg("助手回复"),
 		makeUserMsg("用户消息2"),
 	)
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -299,7 +314,10 @@ func TestConvertRequest_SystemPrompt_StandaloneBeforeAssistant(t *testing.T) {
 		makeAssistantMsg("助手回复"),
 		makeUserMsg("用户消息"),
 	)
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -324,7 +342,10 @@ func TestConvertRequest_MultipleSystemPrompts(t *testing.T) {
 		makeSystemMsg("系统提示2"),
 		makeUserMsg("用户消息"),
 	)
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -350,7 +371,10 @@ func TestConvertRequest_EmptySystemPrompt_Ignored(t *testing.T) {
 		makeSystemMsg(""),
 		makeUserMsg("用户消息"),
 	)
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -373,7 +397,10 @@ func TestConvertRequest_EmptySystemPrompt_Ignored(t *testing.T) {
 // TestConvertRequest_SingleUserMessage_EmptyHistory 单条 user 消息，history 应为空
 func TestConvertRequest_SingleUserMessage_EmptyHistory(t *testing.T) {
 	req := newReq("claude-sonnet-4.5", makeUserMsg("hello"))
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -388,7 +415,10 @@ func TestConvertRequest_LastAssistantMovedToHistory(t *testing.T) {
 		makeUserMsg("用户消息"),
 		makeAssistantMsg("助手回复"),
 	)
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -428,7 +458,10 @@ func TestConvertRequest_AutoInsertContinueInHistory(t *testing.T) {
 		makeToolMsg("tool-id", "工具结果"),
 		makeUserMsg("最后用户消息"),
 	)
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -450,7 +483,10 @@ func TestConvertRequest_EmptyUserContent_Fallback(t *testing.T) {
 	req := newReq("claude-sonnet-4.5",
 		makeUserMsg(""),
 	)
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -467,7 +503,10 @@ func TestConvertRequest_EmptyUserContent_WithToolResults_Fallback(t *testing.T) 
 		makeAssistantMsg("助手回复"),
 		makeToolMsg("tool-id-1", "工具结果"),
 	)
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -540,7 +579,10 @@ func TestConvertRequest_ImageInCurrentMessage(t *testing.T) {
 			},
 		},
 	}
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -571,7 +613,10 @@ func TestConvertRequest_ImageThreshold_TooFar(t *testing.T) {
 		makeUserMsg("最后消息"),
 	}
 	req := providers.Request{Model: "claude-sonnet-4.5", Messages: messages}
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -614,7 +659,10 @@ func TestConvertRequest_ImageThreshold_Close(t *testing.T) {
 		makeUserMsg("最后消息"),
 	}
 	req := providers.Request{Model: "claude-sonnet-4.5", Messages: messages}
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -874,7 +922,10 @@ func TestConvertRequest_RoleTool_AsLastMessage(t *testing.T) {
 		makeAssistantMsg("助手回复"),
 		makeToolMsg("tool-use-id-1", "工具执行结果"),
 	)
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -945,7 +996,10 @@ func TestConvertRequest_FullConversation(t *testing.T) {
 			makeUserMsg("谢谢"),
 		},
 	}
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -1002,7 +1056,10 @@ func TestConvertRequest_AssistantWithToolCall_ThenToolResult(t *testing.T) {
 			makeToolMsg("call-tool-1", "工具执行完成"),
 		},
 	}
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
@@ -1050,7 +1107,10 @@ func TestConvertRequest_ConsecutiveUserMessages_AutoContinue(t *testing.T) {
 		makeToolMsg("tool-id-x", "工具结果"),
 		makeUserMsg("最后一条"),
 	)
-	result := ConvertRequest(context.Background(), req)
+	result, err := ConvertRequest(context.Background(), req)
+	if err != nil {
+		t.Fatalf("期望 error 为 nil，实际 %v", err)
+	}
 	if result == nil {
 		t.Fatal("期望返回非 nil 结果")
 	}
