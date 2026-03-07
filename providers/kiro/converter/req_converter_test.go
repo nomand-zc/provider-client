@@ -32,25 +32,14 @@ func makeImagePart(data []byte, format string) providers.ContentPart {
 	}
 }
 
-// mockTool 实现 providers.Tool 接口的测试工具
-type mockTool struct {
-	decl *providers.Declaration
-}
-
-func (m *mockTool) Declaration() *providers.Declaration {
-	return m.decl
-}
-
 // makeTool 快速构造测试工具
 func makeTool(name, desc string) providers.Tool {
-	return &mockTool{
-		decl: &providers.Declaration{
-			Name:        name,
-			Description: desc,
-			InputSchema: &providers.Schema{
-				Type:       "object",
-				Properties: map[string]*providers.Schema{},
-			},
+	return providers.Tool{
+		Name:        name,
+		Description: desc,
+		Parameters: providers.Schema{
+			Type:       "object",
+			Properties: map[string]*providers.Schema{},
 		},
 	}
 }
