@@ -30,7 +30,27 @@
         },
         {
             "role": "user",
-            "content": "查询一下背景的明天的天气情况"
+            "content": "查询一下北京的明天的天气情况"
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "type": "function",
+                    "id": "call_get_weather_001",
+                    "index": 0,
+                    "function": {
+                        "name": "get_weather",
+                        "arguments": "{\"city\": \"北京\", \"date\": \"2026-03-08\"}"
+                    }
+                }
+            ]
+        },
+        {
+            "role": "tool",
+            "tool_id": "call_get_weather_001",
+            "tool_name": "get_weather",
+            "content": "{\"city\": \"北京\", \"date\": \"2026-03-08\", \"weather\": \"晴转多云\", \"temperature\": {\"high\": 12, \"low\": 3}, \"humidity\": \"35%\", \"wind\": \"北风3-4级\"}"
         }
     ],
     "generation_config": {
