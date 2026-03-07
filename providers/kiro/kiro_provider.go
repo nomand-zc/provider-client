@@ -129,6 +129,7 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 	// request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", kiroCreds.AccessToken))
 	request.Header.Set("amz-sdk-invocation-id", inv.ID)
+	// TODO: 需要根据creds生成稳定可靠的机器码，用于生成amz-sdk-invocation-id与x-amz-user-agent等信息
 
 	// 3. 发送请求, 并检查状态码
 	resp, err := p.httpClient.Do(request)
