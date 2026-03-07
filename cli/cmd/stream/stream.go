@@ -3,6 +3,7 @@ package stream
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
@@ -93,9 +94,9 @@ func (s *streamer) run() error {
 
 	// 处理流式响应
 	for {
-		response, err := reader.Read()
+		response, err := reader.Read(context.Background())
 		if err != nil {
-			if err == queue.ErrQueueClosed {
+			if errors.Is(err, queue.ErrQueueClosed) {
 				break
 			}
 			return fmt.Errorf("读取流式响应失败: %w", err)

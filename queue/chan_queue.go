@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"sync/atomic"
 )
 
@@ -20,24 +21,32 @@ func (q *queue[T]) Len() int {
 	return len(q.c)
 }
 
-func (q *queue[T]) Read() (T, error) {
+func (q *queue[T]) Read(ctx context.Context) (T, error) {
 	var zero T
-	
-	item, ok := <-q.c
-	if !ok {
-		return zero, ErrQueueClosed
+
+	select {
+	case <-ctx.Done():
+		return zero, ctx.Err()
+	case item, ok := <-q.c:
+		if !ok {
+			return zero, ErrQueueClosed
+		}
+		return item, nil
 	}
-	return item, nil
 }
 
-func (q *queue[T]) Write(item T) error {
-	// 使用读锁快速检查关闭状态
+func (q *queue[T]) Write(ctx context.Context, item T) error {
+	// 使用原子操作快速检查关闭状态
 	if atomic.LoadUint32(&q.closed) == 1 {
 		return ErrQueueClosed
 	}
-	
-	q.c <- item
-	return nil
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case q.c <- item:
+		return nil
+	}
 }
 
 func (q *queue[T]) Close() error {

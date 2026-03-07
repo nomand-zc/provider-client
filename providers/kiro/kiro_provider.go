@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -53,7 +54,17 @@ func (p *kiroProvider) Name() string {
 // GenerateContent generates content.
 func (p *kiroProvider) GenerateContent(ctx context.Context, creds credentials.Credentials, 
 	req providers.Request) (*providers.Response, error) {
-	return nil, nil
+	reader, err := p.GenerateContentStream(ctx, creds, req)
+	if err != nil {
+		return nil, err
+	}
+	var resp *providers.Response
+	for {
+		// TODO: 读取流信息，然后拼接成一条完整的响应
+		item, err := reader.Read(ctx)
+		
+	}
+	return resp, nil
 }
 
 // GenerateContentStream generates content in a stream.
@@ -67,6 +78,7 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 		return nil, fmt.Errorf("failed to calculate tokens: %w", err)
 	}
 	inv.Usage.PromptTokens = inputTokens
+	inv.ID = uuid.NewString()
 
 	// 2. 构建请求信息
 	kiroCreds := creds.(*kirocreds.Credentials)
@@ -87,9 +99,10 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 	for key, value := range p.options.headerBuilder() {
 		request.Header.Set(key, value)
 	}
-	request.Header.Set("Accept", "text/event-stream")
+	// request.Header.Set("Accept", "text/event-stream")
+	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", kiroCreds.AccessToken))
-	request.Header.Set("amz-sdk-invocation-id", uuid.NewString())
+	request.Header.Set("amz-sdk-invocation-id", inv.ID)
 
 	// 3. 发送请求, 并检查状态码
 	resp, err := p.httpClient.Do(request)
@@ -130,7 +143,7 @@ func (p *kiroProvider) handlerStreamEvent(ctx context.Context, inv *providers.In
 			payloadBuf = payloadBuf[0:0]
 			e, err := decoder.Decode(respBody, payloadBuf)
 			if err != nil {
-				if err != io.EOF {
+				if !errors.Is(err, queue.ErrQueueClosed) {
 					firstErr = err
 					log.Errorf("kiro stream decode error: %v", err)
 				}
@@ -149,7 +162,9 @@ func (p *kiroProvider) handlerStreamEvent(ctx context.Context, inv *providers.In
 			}
 
 			if msg.ShouldSendMessage() {
-				chainQueue.Write(result)
+				// 修复ID
+				result.ID = inv.ID
+			chainQueue.Write(ctx, result)
 			}
 		}
 
@@ -157,6 +172,7 @@ func (p *kiroProvider) handlerStreamEvent(ctx context.Context, inv *providers.In
 		collectedUsage.TotalTokens = collectedUsage.PromptTokens + collectedUsage.CompletionTokens
 		finishReason := "stop"
 		finalResp := &providers.Response{
+			ID:        inv.ID,
 			Object:    "chat.completion.chunk",
 			Created:   time.Now().Unix(),
 			Timestamp: time.Now(),
@@ -175,7 +191,7 @@ func (p *kiroProvider) handlerStreamEvent(ctx context.Context, inv *providers.In
 				Type:    "stream_parse_error",
 			}
 		}
-		chainQueue.Write(finalResp)
+		chainQueue.Write(ctx, finalResp)
 	}()
 
 	return chainQueue

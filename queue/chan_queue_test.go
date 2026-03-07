@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -22,7 +23,7 @@ func TestChainQueue(t *testing.T) {
 	}
 
 	// 测试Write方法
-	err := q.Write(42)
+	err := q.Write(context.Background(), 42)
 	if err != nil {
 		t.Errorf("Write failed: %v", err)
 	}
@@ -33,7 +34,7 @@ func TestChainQueue(t *testing.T) {
 	}
 
 	// 测试Read方法
-	item, err := q.Read()
+	item, err := q.Read(context.Background())
 	if err != nil {
 		t.Errorf("Read failed: %v", err)
 	}
@@ -48,7 +49,7 @@ func TestChainQueue(t *testing.T) {
 
 	// 测试批量写入
 	for i := range 5 {
-		err = q.Write(i)
+		err = q.Write(context.Background(), i)
 		if err != nil {
 			t.Errorf("Write %d failed: %v", i, err)
 		}
@@ -71,14 +72,14 @@ func TestChainQueue(t *testing.T) {
 	}
 
 	// 测试关闭后写入
-	err = q.Write(100)
+	err = q.Write(context.Background(), 100)
 	if err == nil {
 		t.Error("Write should fail on closed queue")
 	}
 
 	// 测试关闭后读取 - 队列中还有数据，应该能成功读取
 	for i := range 5 {
-		item, err = q.Read()
+		item, err = q.Read(context.Background())
 		if err != nil {
 			t.Errorf("Read should succeed on closed queue with data, got error: %v", err)
 		}
@@ -93,7 +94,7 @@ func TestChainQueue(t *testing.T) {
 	}
 
 	// 测试关闭后读取空队列
-	_, err = q.Read()
+	_, err = q.Read(context.Background())
 	if err == nil {
 		t.Error("Read should fail on closed empty queue")
 	}
@@ -112,7 +113,7 @@ func TestConcurrentAccess(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 			for j := 0; j < 100; j++ {
-				err := q.Write(id*100 + j)
+				err := q.Write(context.Background(), id*100 + j)
 				if err != nil && !IsClosedError(err) && !IsFullError(err) {
 					t.Errorf("Unexpected error from goroutine %d: %v", id, err)
 				}
@@ -130,7 +131,7 @@ func TestConcurrentAccess(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 			for j := 0; j < 100; j++ {
-				_, err := q.Read()
+				_, err := q.Read(context.Background())
 				if err != nil && !IsClosedError(err) {
 					t.Errorf("Read error from goroutine %d: %v", id, err)
 				}
@@ -172,12 +173,12 @@ func TestConcurrentClose(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 			for j := 0; j < 10; j++ {
-				err := q.Write(id*10 + j)
+				err := q.Write(context.Background(), id*10 + j)
 				if err != nil && !IsClosedError(err) && !IsFullError(err) {
 					t.Errorf("Write error: %v", err)
 				}
 				
-				_, err = q.Read()
+				_, err = q.Read(context.Background())
 				if err != nil && !IsClosedError(err) {
 					t.Errorf("Read error: %v", err)
 				}
@@ -201,14 +202,14 @@ func TestQueueFull(t *testing.T) {
 	
 	// 填满队列
 	for i := 0; i < 5; i++ {
-		err := q.Write(i)
+		err := q.Write(context.Background(), i)
 		if err != nil {
 			t.Errorf("Write failed: %v", err)
 		}
 	}
 	
 	// 尝试写入第6个元素，应该返回队列满错误
-	err := q.Write(6)
+	err := q.Write(context.Background(), 6)
 	if !IsFullError(err) {
 		t.Errorf("Expected queue full error, got: %v", err)
 	}

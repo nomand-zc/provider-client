@@ -4,8 +4,8 @@ import "context"
 
 // Invocation 调用上下文
 type Invocation struct {
-	RequestID string `json:"requestID"`
-	Usage     Usage  `json:"usage"`
+	ID    string `json:"id"`
+	Usage Usage  `json:"usage"`
 }
 
 type invocationKey struct{}
