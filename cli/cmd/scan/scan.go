@@ -2,6 +2,7 @@ package scan
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,10 +10,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/nomand-zc/provider-client/cli/internal/auth"
-	"github.com/nomand-zc/provider-client/cli/utils"
+	"github.com/nomand-zc/provider-client/cli/internal/factory"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
-	kiroprovider "github.com/nomand-zc/provider-client/providers/kiro"
 )
 
 var defaultCredScanner credScanner
@@ -23,6 +23,22 @@ type credScanner struct {
 	destDir      string
 	providerName string
 	provider     providers.Provider
+}
+
+// CMD 返回 scan 子命令
+func CMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "scan",
+		Short: "扫描并校验凭证文件",
+		Long:  `从指定目录下递归扫描所有 JSON 凭证文件，校验凭证是否有效，并将凭证文件按状态移动到对应目录。`,
+	}
+
+	// 注册子命令
+	cmd.AddCommand(
+		defaultCredScanner.cmd(),
+	)
+
+	return cmd
 }
 
 func (s *credScanner) cmd() *cobra.Command {
@@ -50,7 +66,7 @@ func (s *credScanner) cmd() *cobra.Command {
 
 	cmd.Flags().StringVarP(&s.srcDir, "src", "s", "", "凭证文件所在的源目录（必填）")
 	cmd.Flags().StringVarP(&s.destDir, "dest", "d", "", "分类后凭证文件的目标目录（必填）")
-	cmd.Flags().StringVarP(&s.providerName, "provider", "p", "kiro", fmt.Sprintf("provider 名称，支持：%v", "kiro"))
+	cmd.Flags().StringVarP(&s.providerName, "provider", "p", "kiro", fmt.Sprintf("provider 名称，支持：%v", factory.SupportedProviders))
 	_ = cmd.MarkFlagRequired("src")
 	_ = cmd.MarkFlagRequired("dest")
 
@@ -69,11 +85,10 @@ const (
 // run 执行扫描校验逻辑
 func (s *credScanner) run() error {
 	// 初始化 provider
-	switch s.providerName {
-	case "kiro":
-		s.provider = kiroprovider.NewProvider()
-	default:
-		return fmt.Errorf("不支持的 provider: %q，支持的 provider 列表：%v", s.providerName, "kiro")
+	var err error
+	s.provider, err = factory.NewProvider(s.providerName)
+	if err != nil {
+		return err
 	}
 
 	// 创建目标子目录
@@ -85,7 +100,7 @@ func (s *credScanner) run() error {
 	var enableCount, limitCount, disableCount, invalidCount int
 
 	// 递归扫描所有 JSON 文件
-	err := filepath.Walk(s.srcDir, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(s.srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() ||
 			!strings.HasSuffix(strings.ToLower(info.Name()), ".json") {
 			return nil
@@ -100,7 +115,7 @@ func (s *credScanner) run() error {
 
 		// 根据状态移动文件
 		destPath := filepath.Join(s.destDir, string(status), info.Name())
-		if err := utils.CopyFile(path, destPath); err != nil {
+		if err := copyFile(path, destPath); err != nil {
 			log.Warnf("\n拷贝凭证文件 %q 到 %q 失败: %v", path, destPath, err)
 			return nil
 		}
@@ -164,4 +179,24 @@ func ensureDirs(destDir string) error {
 		}
 	}
 	return nil
+}
+
+// copyFile 拷贝文件
+func copyFile(srcFile, destFile string) error {
+	src, err := os.Open(srcFile)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	dst, err := os.Create(destFile)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return err
+	}
+	return dst.Sync()
 }

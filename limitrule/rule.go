@@ -67,9 +67,9 @@ func (r *LimitRule) IsTriggered() bool {
 	return r.Remain <= 0
 }
 
-// IsEmpty 判断规则是否为空
+// IsValid 判断规则是否有效（非 nil 且 Total > 0）
 func (r *LimitRule) IsValid() bool {
-	return r == nil || r.Total == 0
+	return r != nil && r.Total > 0
 }
 
 // String 返回规则字符串

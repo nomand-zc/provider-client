@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/nomand-zc/provider-client/cli/internal/factory"
 	"github.com/nomand-zc/provider-client/credentials"
 	kirocreds "github.com/nomand-zc/provider-client/credentials/kiro"
 	"github.com/nomand-zc/provider-client/log"
@@ -16,7 +17,7 @@ import (
 )
 
 var (
-	// 配额不足错误
+	// ErrQuotaInsufficient 配额不足错误
 	ErrQuotaInsufficient = errors.New("QuotaInsufficient")
 )
 
@@ -34,7 +35,7 @@ func LoadCredentials(providerName string, file string) (credentials.Credentials,
 	case "kiro":
 		creds = kirocreds.NewCredentials(raw)
 	default:
-		return nil, fmt.Errorf("不支持的 provider: %q，支持的 provider 列表：%v", providerName, "kiro")
+		return nil, fmt.Errorf("不支持的 provider: %q，支持的 provider 列表：%v", providerName, factory.SupportedProviders)
 	}
 
 	// 验证凭证，但允许过期凭证（ErrExpiresAtExpired 错误不视为失败）
@@ -126,13 +127,30 @@ func GetCredentialsFromFile(provider providers.Provider, file string) (credentia
 		if err := SaveCredentials(creds, file); err != nil {
 			return nil, fmt.Errorf("保存刷新后的凭证失败: %w", err)
 		}
+		log.Infof("凭证刷新成功，已更新到文件: %s", file)
 	}
 
 	if !VerifyQuota(provider, creds) {
 		return nil, ErrQuotaInsufficient
 	}
 
-	log.Infof("凭证刷新成功，已更新到文件: %s", file)
-
 	return creds, nil
+}
+
+// VerifyQuota 验证配额是否足够
+func VerifyQuota(provider providers.Provider, creds credentials.Credentials) bool {
+	usage, err := provider.GetUsage(context.Background(), creds)
+	if err != nil {
+		return false
+	}
+	if len(usage) == 0 {
+		return false
+	}
+
+	for _, u := range usage {
+		if u.IsTriggered() {
+			return false
+		}
+	}
+	return true
 }

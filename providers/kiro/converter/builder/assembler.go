@@ -5,17 +5,24 @@ import (
 	"github.com/nomand-zc/provider-client/providers/kiro/converter/builder/types"
 )
 
+const (
+	// chatTriggerTypeManual 对话触发类型：手动触发
+	chatTriggerTypeManual = "MANUAL"
+	// originAIEditor 消息来源标识：AI 编辑器
+	originAIEditor = "AI_EDITOR"
+)
+
 // Assemble 将 BuildContext 中的数据组装为最终的 *types.Request
 func Assemble(ctx *BuildContext) *types.Request {
 	req := &types.Request{}
-	req.ConversationState.ChatTriggerType = "MANUAL"
+	req.ConversationState.ChatTriggerType = chatTriggerTypeManual
 	req.ConversationState.ConversationId = uuid.NewString()
 
 	// 构建 userInputMessage
 	userInputMsg := types.UserInputMessage{
 		Content: ctx.CurrentContent,
 		ModelId: ctx.ModelId,
-		Origin:  "AI_EDITOR",
+		Origin:  originAIEditor,
 	}
 	if len(ctx.CurrentImages) > 0 {
 		userInputMsg.Images = ctx.CurrentImages

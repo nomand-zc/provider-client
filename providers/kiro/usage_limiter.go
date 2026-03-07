@@ -11,6 +11,7 @@ import (
 	"github.com/juju/errors"
 	"github.com/nomand-zc/provider-client/credentials"
 	kirocreds "github.com/nomand-zc/provider-client/credentials/kiro"
+	"github.com/nomand-zc/provider-client/httpclient"
 	"github.com/nomand-zc/provider-client/limitrule"
 	"github.com/nomand-zc/provider-client/providers"
 )
@@ -159,7 +160,8 @@ func (p *kiroProvider) send(ctx context.Context, creds credentials.Credentials) 
 	if kiroCreds.AuthMethod == kirocreds.AuthMethodSocial && kiroCreds.ProfileArn != "" {
 		rawURL += "&profileArn=" + kiroCreds.ProfileArn
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	req, err := http.NewRequestWithContext(httpclient.EnablePrintRespBody(ctx),
+		http.MethodGet, rawURL, nil)
 	if err != nil {
 		return nil, errors.Annotate(err, "create get usage limits request failed")
 	}

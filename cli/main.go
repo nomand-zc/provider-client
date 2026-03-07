@@ -26,20 +26,17 @@ func initLogger() {
 		zapcore.AddSync(logFile),
 	)
 
-	log.Default = zap.New(
-		zapcore.NewCore(
-			zapcore.NewConsoleEncoder(log.EncoderConfig),
-			multiWriter,
-			log.ZapLevel,
-		),
-		zap.AddCaller(),
-		zap.AddCallerSkip(1),
-	).Sugar()
+	logger := buildLogger(multiWriter)
+	log.Default = logger
+	log.ContextDefault = logger
+}
 
-	log.ContextDefault = zap.New(
+// buildLogger 构建 zap logger
+func buildLogger(w zapcore.WriteSyncer) *zap.SugaredLogger {
+	return zap.New(
 		zapcore.NewCore(
 			zapcore.NewConsoleEncoder(log.EncoderConfig),
-			multiWriter,
+			w,
 			log.ZapLevel,
 		),
 		zap.AddCaller(),

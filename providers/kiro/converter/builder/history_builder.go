@@ -37,7 +37,7 @@ func (b *HistoryBuilder) Build(ctx *BuildContext) error {
 				UserInputMessage: &types.UserInputMessage{
 					Content: systemPrompt + "\n\n" + firstUserContent,
 					ModelId: modelId,
-					Origin:  "AI_EDITOR",
+					Origin:  originAIEditor,
 				},
 			})
 			startIndex = 1
@@ -46,7 +46,7 @@ func (b *HistoryBuilder) Build(ctx *BuildContext) error {
 				UserInputMessage: &types.UserInputMessage{
 					Content: systemPrompt,
 					ModelId: modelId,
-					Origin:  "AI_EDITOR",
+					Origin:  originAIEditor,
 				},
 			})
 		}
@@ -78,7 +78,7 @@ func (b *HistoryBuilder) Build(ctx *BuildContext) error {
 func BuildHistoryUserMessage(msg providers.Message, modelId string, shouldKeepImages bool) types.UserInputMessage {
 	userInputMsg := types.UserInputMessage{
 		ModelId: modelId,
-		Origin:  "AI_EDITOR",
+		Origin:  originAIEditor,
 	}
 
 	var textContent string

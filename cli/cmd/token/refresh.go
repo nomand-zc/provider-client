@@ -10,9 +10,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/nomand-zc/provider-client/cli/internal/auth"
+	"github.com/nomand-zc/provider-client/cli/internal/factory"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
-	kiroprovider "github.com/nomand-zc/provider-client/providers/kiro"
 )
 
 var (
@@ -24,6 +24,22 @@ type refresher struct {
 	credFile     string
 	providerName string
 	provider     providers.Provider
+}
+
+// CMD 返回 token 子命令，并注册所有 token 相关子命令
+func CMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "token",
+		Short: "token 凭证管理",
+		Long:  `管理各 AI Provider 的 token 凭证，包括刷新等操作。`,
+	}
+
+	// 注册子命令
+	cmd.AddCommand(
+		defaultRefresher.cmd(),
+	)
+
+	return cmd
 }
 
 func (r refresher) cmd() *cobra.Command {
@@ -43,7 +59,7 @@ func (r refresher) cmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&r.credFile, "file", "f", "", "凭证 JSON 文件路径（必填）")
-	cmd.Flags().StringVarP(&r.providerName, "provider", "p", "kiro", fmt.Sprintf("provider 名称，支持：%v（必填）", "kiro"))
+	cmd.Flags().StringVarP(&r.providerName, "provider", "p", "kiro", fmt.Sprintf("provider 名称，支持：%v（必填）", factory.SupportedProviders))
 	_ = cmd.MarkFlagRequired("file")
 
 	return cmd
@@ -51,12 +67,12 @@ func (r refresher) cmd() *cobra.Command {
 
 // run 执行 token refresh 逻辑
 func (r *refresher) run() error {
-	switch r.providerName {
-	case "kiro":
-		r.provider = kiroprovider.NewProvider()
-	default:
-		return fmt.Errorf("不支持的 provider: %q，支持的 provider 列表：%v", r.provider, "kiro")
+	var err error
+	r.provider, err = factory.NewProvider(r.providerName)
+	if err != nil {
+		return err
 	}
+
 	info, err := os.Stat(r.credFile)
 	if err != nil {
 		return fmt.Errorf("访问路径失败: %w", err)

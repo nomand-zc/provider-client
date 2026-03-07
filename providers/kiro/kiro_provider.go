@@ -27,6 +27,11 @@ const (
 	defaultQueueSize = 100
 	// 事件流解码 payload 缓冲区大小
 	defaultPayloadBufSize = 10 * 1024
+
+	// objectChatCompletion 非流式响应的 Object 类型
+	objectChatCompletion = "chat.completion"
+	// objectChatCompletionChunk 流式响应的 Object 类型
+	objectChatCompletionChunk = "chat.completion.chunk"
 )
 
 type kiroProvider struct {
@@ -88,7 +93,7 @@ func (p *kiroProvider) GenerateContent(ctx context.Context, creds credentials.Cr
 		return nil, fmt.Errorf("no response received from stream")
 	}
 	// 将 Object 标记为非流式响应类型
-	resp.Object = "chat.completion"
+	resp.Object = objectChatCompletion
 	resp.IsPartial = false
 	resp.Done = true
 	return resp, nil
@@ -132,7 +137,6 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 		request.Header.Set(key, value)
 	}
 	request.Header.Set("Accept", "text/event-stream")
-	// request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", kiroCreds.AccessToken))
 	request.Header.Set("amz-sdk-invocation-id", inv.ID)
 	// TODO: 需要根据creds生成稳定可靠的机器码，用于生成amz-sdk-invocation-id与x-amz-user-agent等信息
@@ -153,10 +157,10 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 	}
 
 	// 4. 解码流式事件内容
-	return p.handlerStreamEvent(ctx, inv, resp.Body), nil
+	return p.handleStreamEvent(ctx, inv, resp.Body), nil
 }
 
-func (p *kiroProvider) handlerStreamEvent(ctx context.Context, inv *providers.Invocation, 
+func (p *kiroProvider) handleStreamEvent(ctx context.Context, inv *providers.Invocation,
 	respBody io.ReadCloser) queue.Reader[*providers.Response] {
 	chainQueue := queue.NewChanQueue[*providers.Response](defaultQueueSize)
 	decoder := eventstream.NewDecoder()
@@ -166,7 +170,7 @@ func (p *kiroProvider) handlerStreamEvent(ctx context.Context, inv *providers.In
 	toolCallIndexManager := parser.NewToolCallIndexManager()
 
 	go func() {
-		defer func (){
+		defer func() {
 			chainQueue.Close()
 			respBody.Close()
 			log.InfoContextf(ctx, "\n ===== kiro stream event =====: %s", buf.String())
@@ -189,12 +193,12 @@ func (p *kiroProvider) handlerStreamEvent(ctx context.Context, inv *providers.In
 				break
 			}
 
-		msg := parser.StreamMessage(e)
-		// 记录日志buf
-		buf.WriteString(fmt.Sprintf("\n[Event]: %s", msg.String()))
-		
-		result, err := converter.ConvertResponse(ctx, &msg, 
-			parser.WithToolCallIndexManager(toolCallIndexManager))
+			msg := parser.StreamMessage(e)
+			// 记录日志buf
+			buf.WriteString(fmt.Sprintf("\n[Event]: %s", msg.String()))
+
+			result, err := converter.ConvertResponse(ctx, &msg,
+				parser.WithToolCallIndexManager(toolCallIndexManager))
 			if err != nil || result == nil {
 				continue
 			}
@@ -207,7 +211,7 @@ func (p *kiroProvider) handlerStreamEvent(ctx context.Context, inv *providers.In
 			if msg.ShouldSendMessage() {
 				// 修复ID
 				result.ID = inv.ID
-			chainQueue.Write(ctx, result)
+				chainQueue.Write(ctx, result)
 			}
 		}
 
@@ -216,7 +220,7 @@ func (p *kiroProvider) handlerStreamEvent(ctx context.Context, inv *providers.In
 		finishReason := "stop"
 		finalResp := &providers.Response{
 			ID:        inv.ID,
-			Object:    "chat.completion.chunk",
+		Object:    objectChatCompletionChunk,
 			Created:   time.Now().Unix(),
 			Timestamp: time.Now(),
 			Done:      true,

@@ -10,9 +10,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/nomand-zc/provider-client/cli/internal/auth"
+	"github.com/nomand-zc/provider-client/cli/internal/factory"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
-	kiroprovider "github.com/nomand-zc/provider-client/providers/kiro"
 )
 
 var defaultModelsViewer modelsViewer
@@ -24,6 +24,23 @@ type modelsViewer struct {
 	credFile     string
 	providerName string
 	provider     providers.Provider
+}
+
+// CMD 返回 usage 子命令，并注册所有 usage 相关子命令
+func CMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "usage",
+		Short: "查看凭证用量信息",
+		Long:  `查看各 AI Provider 凭证的用量信息，包括日限额、月限额、已使用量等。`,
+	}
+
+	// 注册子命令
+	cmd.AddCommand(
+		defaultUsageViewer.cmd(),
+		defaultModelsViewer.cmd(),
+	)
+
+	return cmd
 }
 
 func (m *modelsViewer) cmd() *cobra.Command {
@@ -53,17 +70,16 @@ func (m *modelsViewer) cmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&m.credFile, "file", "f", "", "凭证 JSON 文件路径或目录（可选，不传则查看 provider 默认模型列表）")
-	cmd.Flags().StringVarP(&m.providerName, "provider", "p", "kiro", fmt.Sprintf("provider 名称，支持：%v", "kiro"))
+	cmd.Flags().StringVarP(&m.providerName, "provider", "p", "kiro", fmt.Sprintf("provider 名称，支持：%v", factory.SupportedProviders))
 
 	return cmd
 }
 
 func (m *modelsViewer) run() error {
-	switch m.providerName {
-	case "kiro":
-		m.provider = kiroprovider.NewProvider()
-	default:
-		return fmt.Errorf("不支持的 provider: %q，支持的 provider 列表：%v", m.providerName, "kiro")
+	var err error
+	m.provider, err = factory.NewProvider(m.providerName)
+	if err != nil {
+		return err
 	}
 
 	// 未传 --file，查看 provider 默认模型列表

@@ -10,10 +10,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/nomand-zc/provider-client/cli/internal/auth"
+	"github.com/nomand-zc/provider-client/cli/internal/factory"
 	"github.com/nomand-zc/provider-client/credentials"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
-	kiroprovider "github.com/nomand-zc/provider-client/providers/kiro"
 	"github.com/nomand-zc/provider-client/queue"
 )
 
@@ -52,7 +52,7 @@ func CMD() *cobra.Command {
 
 	cmd.Flags().StringVarP(&defaultGenerator.credFile, "creds", "c", "", "凭证 JSON 文件路径或目录路径（必填）")
 	cmd.Flags().StringVarP(&defaultGenerator.dataFile, "data", "d", "", "请求 JSON 文件路径（必填）")
-	cmd.Flags().StringVarP(&defaultGenerator.providerName, "provider", "p", "kiro", fmt.Sprintf("provider 名称，支持：%v（必填）", "kiro"))
+	cmd.Flags().StringVarP(&defaultGenerator.providerName, "provider", "p", "kiro", fmt.Sprintf("provider 名称，支持：%v（必填）", factory.SupportedProviders))
 	cmd.Flags().BoolVarP(&defaultGenerator.stream, "stream", "s", false, "是否使用流式模式（默认为非流式）")
 
 	_ = cmd.MarkFlagRequired("creds")
@@ -64,11 +64,10 @@ func CMD() *cobra.Command {
 // run 执行生成逻辑
 func (g *generator) run() error {
 	// 初始化 provider
-	switch g.providerName {
-	case "kiro":
-		g.provider = kiroprovider.NewProvider()
-	default:
-		return fmt.Errorf("不支持的 provider: %q，支持的 provider 列表：%v", g.providerName, "kiro")
+	var err error
+	g.provider, err = factory.NewProvider(g.providerName)
+	if err != nil {
+		return err
 	}
 
 	creds, err := auth.GetValidCredentials(g.provider, g.credFile)

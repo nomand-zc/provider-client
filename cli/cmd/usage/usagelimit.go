@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/nomand-zc/provider-client/cli/internal/auth"
+	"github.com/nomand-zc/provider-client/cli/internal/factory"
 	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
-	kiroprovider "github.com/nomand-zc/provider-client/providers/kiro"
 )
 
 var (
@@ -45,8 +45,8 @@ func (u usageViewer) cmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&u.credFile, "file", "f", "", "凭证 JSON 文件路径（必填）")
-	cmd.Flags().StringVarP(&u.credFile, "output", "o", "", "用量信息输出目录（选填）")
-	cmd.Flags().StringVarP(&u.providerName, "provider", "p", "kiro", fmt.Sprintf("provider 名称，支持：%v（必填）", "kiro"))
+	cmd.Flags().StringVarP(&u.outputDir, "output", "o", "", "用量信息输出目录（选填）")
+	cmd.Flags().StringVarP(&u.providerName, "provider", "p", "kiro", fmt.Sprintf("provider 名称，支持：%v（必填）", factory.SupportedProviders))
 	_ = cmd.MarkFlagRequired("file")
 
 	return cmd
@@ -54,12 +54,12 @@ func (u usageViewer) cmd() *cobra.Command {
 
 // run 执行 usage view 逻辑
 func (u *usageViewer) run() error {
-	switch u.providerName {
-	case "kiro":
-		u.provider = kiroprovider.NewProvider()
-	default:
-		return fmt.Errorf("不支持的 provider: %q，支持的 provider 列表：%v", u.provider, "kiro")
+	var err error
+	u.provider, err = factory.NewProvider(u.providerName)
+	if err != nil {
+		return err
 	}
+
 	info, err := os.Stat(u.credFile)
 	if err != nil {
 		return fmt.Errorf("访问路径失败: %w", err)
