@@ -48,6 +48,8 @@ func MustRegister(p PayloadParser) error {
 	}
 	registry[msgType][evtType] = p
 	log.Debugf("注册解析器: messageType=%s, eventType=%s", msgType, evtType)
+
+	return nil
 }
 
 // Get 根据消息类型和事件类型获取对应的解析器
