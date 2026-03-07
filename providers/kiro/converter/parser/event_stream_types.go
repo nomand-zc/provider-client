@@ -1,6 +1,10 @@
 package parser
 
-import "github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream"
+import (
+	"fmt"
+
+	"github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream"
+)
 
 // 消息类型常量
 const (
@@ -80,4 +84,9 @@ func (m StreamMessage) IsContextUsageMessage() bool {
 // ShouldSendMessage 是否应该发送消息
 func (m StreamMessage) ShouldSendMessage() bool {
 	return !m.IsMetricMessage() && !m.IsContextUsageMessage() && len(m.Payload) > 0
+}
+
+// String 消息字符串
+func (m StreamMessage) String() string {
+	return fmt.Sprintf("Headers: %+v, Payload: %s", m.Headers, string(m.Payload))
 }

@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 
@@ -19,7 +20,7 @@ func init() {
 func (p *exceptionParser) MessageType() string { return MessageTypeException }
 func (p *exceptionParser) EventType() string   { return "" }
 
-func (p *exceptionParser) Parse(msg *StreamMessage) (*providers.Response, error) {
+func (p *exceptionParser) Parse(ctx context.Context, msg *StreamMessage, opts ...OptionFunc) (*providers.Response, error) {
 	var exceptionData map[string]any
 	if len(msg.Payload) > 0 {
 		if err := json.Unmarshal(msg.Payload, &exceptionData); err != nil {

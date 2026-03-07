@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -18,7 +19,7 @@ func init() {
 func (p *completionParser) MessageType() string { return MessageTypeEvent }
 func (p *completionParser) EventType() string   { return EventTypeCompletion }
 
-func (p *completionParser) Parse(msg *StreamMessage) (*providers.Response, error) {
+func (p *completionParser) Parse(ctx context.Context, msg *StreamMessage, opts ...OptionFunc) (*providers.Response, error) {
 	var data map[string]any
 	if err := json.Unmarshal(msg.Payload, &data); err != nil {
 		return nil, fmt.Errorf("解析 completion 事件载荷失败: %w", err)

@@ -154,11 +154,17 @@ func (p *kiroProvider) handlerStreamEvent(ctx context.Context, inv *providers.In
 	chainQueue := queue.NewChanQueue[*providers.Response](defaultQueueSize)
 	decoder := eventstream.NewDecoder()
 	payloadBuf := make([]byte, defaultPayloadBufSize)
+	var buf bytes.Buffer
+	// 为每个GenerateContentStream调用创建新的ToolCall索引管理器
+	toolCallIndexManager := parser.NewToolCallIndexManager()
 
 	go func() {
-		defer chainQueue.Close()
-		defer respBody.Close()
-
+		defer func (){
+			chainQueue.Close()
+			respBody.Close()
+			log.InfoContextf(ctx, "\n ===== kiro stream event =====: %s", buf.String())
+		}()
+		
 		// 收集用量统计信息，最后随 stop 事件一起发送
 		var collectedUsage providers.Usage
 		collectedUsage.PromptTokens = inv.Usage.PromptTokens
@@ -176,8 +182,12 @@ func (p *kiroProvider) handlerStreamEvent(ctx context.Context, inv *providers.In
 				break
 			}
 
-			msg := parser.StreamMessage(e)
-			result, err := converter.ConvertResponse(ctx, &msg)
+		msg := parser.StreamMessage(e)
+		// 记录日志buf
+		buf.WriteString(fmt.Sprintf("\n[Event]: %s", msg.String()))
+		
+		result, err := converter.ConvertResponse(ctx, &msg, 
+			parser.WithToolCallIndexManager(toolCallIndexManager))
 			if err != nil || result == nil {
 				continue
 			}

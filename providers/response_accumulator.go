@@ -147,6 +147,7 @@ func (acc *ResponseAccumulator) accumulateDelta(chunk *Response) bool {
 		choice.Message.ReasoningContent += delta.Delta.ReasoningContent
 
 		// 累积工具调用
+		// 优先处理 Delta 中的工具调用
 		for _, deltaTool := range delta.Delta.ToolCalls {
 			toolIndex := 0
 			if deltaTool.Index != nil {
@@ -163,8 +164,35 @@ func (acc *ResponseAccumulator) accumulateDelta(chunk *Response) bool {
 				tool.Type = deltaTool.Type
 			}
 			tool.Index = utils.ToPtr(toolIndex)
-			tool.Function.Name = deltaTool.Function.Name
+			if deltaTool.Function.Name != "" {
+				tool.Function.Name = deltaTool.Function.Name
+			}
 			tool.Function.Arguments = append(tool.Function.Arguments, deltaTool.Function.Arguments...)
+		}
+
+		// 只有在 Delta 中没有工具调用时，才累积 Message 中的工具调用
+		if len(delta.Delta.ToolCalls) == 0 {
+			for _, msgTool := range delta.Message.ToolCalls {
+				toolIndex := 0
+				if msgTool.Index != nil {
+					toolIndex = *msgTool.Index
+				}
+
+				choice.Message.ToolCalls = expandToolCalls(choice.Message.ToolCalls, toolIndex)
+				tool := &choice.Message.ToolCalls[toolIndex]
+
+				if msgTool.ID != "" {
+					tool.ID = msgTool.ID
+				}
+				if msgTool.Type != "" {
+					tool.Type = msgTool.Type
+				}
+				tool.Index = utils.ToPtr(toolIndex)
+				if msgTool.Function.Name != "" {
+					tool.Function.Name = msgTool.Function.Name
+				}
+				tool.Function.Arguments = append(tool.Function.Arguments, msgTool.Function.Arguments...)
+			}
 		}
 	}
 

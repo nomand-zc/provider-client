@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -18,7 +19,7 @@ func init() {
 func (p *toolCallErrorParser) MessageType() string { return MessageTypeEvent }
 func (p *toolCallErrorParser) EventType() string   { return EventTypeToolCallError }
 
-func (p *toolCallErrorParser) Parse(msg *StreamMessage) (*providers.Response, error) {
+func (p *toolCallErrorParser) Parse(ctx context.Context, msg *StreamMessage, opts ...OptionFunc) (*providers.Response, error) {
 	var errorInfo struct {
 		ToolCallID string `json:"tool_call_id"`
 		Error      string `json:"error"`

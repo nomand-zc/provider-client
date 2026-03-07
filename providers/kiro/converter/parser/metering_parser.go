@@ -1,11 +1,11 @@
 package parser
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/nomand-zc/provider-client/log"
 	"github.com/nomand-zc/provider-client/providers"
 )
 
@@ -19,7 +19,7 @@ func init() {
 func (p *meteringParser) MessageType() string { return MessageTypeEvent }
 func (p *meteringParser) EventType() string   { return EventTypeMeteringEvent }
 
-func (p *meteringParser) Parse(msg *StreamMessage) (*providers.Response, error) {
+func (p *meteringParser) Parse(ctx context.Context, msg *StreamMessage, opts ...OptionFunc) (*providers.Response, error) {
 	var data struct {
 		Unit       string  `json:"unit"`
 		UnitPlural string  `json:"unitPlural"`
@@ -28,8 +28,6 @@ func (p *meteringParser) Parse(msg *StreamMessage) (*providers.Response, error) 
 	if err := json.Unmarshal(msg.Payload, &data); err != nil {
 		return nil, fmt.Errorf("解析 meteringEvent 载荷失败: %w", err)
 	}
-
-	log.Debugf("计量事件: unit=%s, usage=%f", data.Unit, data.Usage)
 
 	return &providers.Response{
 		Object:    "chat.completion.chunk",

@@ -30,7 +30,7 @@
         },
         {
             "role": "user",
-            "content": "查询一下北京的明天的天气情况"
+            "content": "查询一下北京和上海的明天的天气情况"
         }
     ],
     "generation_config": {

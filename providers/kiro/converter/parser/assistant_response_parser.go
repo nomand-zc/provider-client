@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"time"
@@ -19,12 +20,12 @@ func init() {
 func (p *assistantResponseParser) MessageType() string { return MessageTypeEvent }
 func (p *assistantResponseParser) EventType() string   { return EventTypeAssistantResponseEvent }
 
-func (p *assistantResponseParser) Parse(msg *StreamMessage) (*providers.Response, error) {
+func (p *assistantResponseParser) Parse(ctx context.Context, msg *StreamMessage, opts ...OptionFunc) (*providers.Response, error) {
 	payloadStr := string(msg.Payload)
 
 	// 检查是否是工具调用事件
 	if isToolCallPayload(payloadStr) {
-		return p.parseToolCall(msg)
+		return p.parseToolCall(ctx, msg, opts...)
 	}
 
 	// 尝试解析为 JSON
@@ -76,7 +77,7 @@ func (p *assistantResponseParser) Parse(msg *StreamMessage) (*providers.Response
 }
 
 // parseToolCall 处理 assistantResponseEvent 中的工具调用
-func (p *assistantResponseParser) parseToolCall(msg *StreamMessage) (*providers.Response, error) {
+func (p *assistantResponseParser) parseToolCall(ctx context.Context, msg *StreamMessage, opts ...OptionFunc) (*providers.Response, error) {
 	var evt struct {
 		Name      string `json:"name"`
 		ToolUseId string `json:"toolUseId"`
@@ -88,9 +89,22 @@ func (p *assistantResponseParser) parseToolCall(msg *StreamMessage) (*providers.
 		return nil, nil
 	}
 
+	// 解析选项参数
+	parseOpt := &ParseOption{}
+	for _, opt := range opts {
+		opt(parseOpt)
+	}
+
+	// 使用ParseOption中的ToolCallIndexManager获取工具调用索引
+	var index int
+	if parseOpt.ToolCallIndexManager != nil {
+		index = parseOpt.ToolCallIndexManager.GetToolCallIndex(evt.ToolUseId)
+	}
+
 	toolCall := providers.ToolCall{
-		ID:   evt.ToolUseId,
-		Type: "function",
+		ID:    evt.ToolUseId,
+		Type:  "function",
+		Index: &index, // 设置正确的索引
 		Function: providers.FunctionDefinitionParam{
 			Name:      evt.Name,
 			Arguments: convertInputToArgs(evt.Input),

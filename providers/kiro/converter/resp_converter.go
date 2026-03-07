@@ -10,13 +10,11 @@ import (
 
 // ConvertResponse 将 Kiro CodeWhisperer 响应转换为通用响应格式
 // 通过 parser 注册器根据 messageType 和 eventType 获取对应的解析器来处理
-func ConvertResponse(_ context.Context, resp *parser.StreamMessage) (
+func ConvertResponse(ctx context.Context, resp *parser.StreamMessage, opts ...parser.OptionFunc) (
 	*providers.Response, error) {
 	if resp == nil {
 		return nil, nil
 	}
-
-	log.Debugf("[kiro: ConvertResponse]response: %+v, playload: %s", *resp, string(resp.Payload))
 
 	messageType := resp.MessageType()
 	eventType := resp.EventType()
@@ -30,5 +28,5 @@ func ConvertResponse(_ context.Context, resp *parser.StreamMessage) (
 		return nil, nil
 	}
 
-	return p.Parse(resp)
+	return p.Parse(ctx, resp, opts...)
 }

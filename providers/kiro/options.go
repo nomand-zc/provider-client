@@ -36,10 +36,10 @@ func DefaultHeaderBuilder() map[string]string {
 		// vide
 		"x-amzn-kiro-agent-mode": "vibe",
 
-		"x-amz-user-agent": "aws-sdk-js/1.0.0 KiroIDE-0.8.140",
+		"x-amz-user-agent": "aws-sdk-js/1.0.0 KiroIDE-0.10.78",
 		// "x-amz-user-agent": "aws-sdk-js/1.0.18 KiroIDE-0.2.13-66c23a8c5d15afabec89ef9954ef52a119f10d369df04d548fc6c1eac694b0d1",
 
-		"User-Agent": "aws-sdk-js/1.0.0 ua/2.1 api/codewhispererruntime#1.0.0 m/E KiroIDE-0.8.140",
+		"User-Agent": "aws-sdk-js/1.0.0 ua/2.1 api/codewhispererruntime#1.0.0 m/E KiroIDE-0.10.78",
 		// "User-Agent": "aws-sdk-js/1.0.18 ua/2.1 os/darwin#25.0.0 lang/js md/nodejs#20.16.0 api/codewhispererstreaming#1.0.18 m/E KiroIDE-0.2.13-66c23a8c5d15afabec89ef9954ef52a119f10d369df04d548fc6c1eac694b0d1",
 	}
 }

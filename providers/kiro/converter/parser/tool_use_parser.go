@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -18,7 +19,7 @@ func init() {
 func (p *toolUseParser) MessageType() string { return MessageTypeEvent }
 func (p *toolUseParser) EventType() string   { return EventTypeToolUseEvent }
 
-func (p *toolUseParser) Parse(msg *StreamMessage) (*providers.Response, error) {
+func (p *toolUseParser) Parse(ctx context.Context, msg *StreamMessage, opts ...OptionFunc) (*providers.Response, error) {
 	var evt struct {
 		Name      string `json:"name"`
 		ToolUseId string `json:"toolUseId"`
@@ -29,9 +30,22 @@ func (p *toolUseParser) Parse(msg *StreamMessage) (*providers.Response, error) {
 		return nil, fmt.Errorf("解析 toolUseEvent 载荷失败: %w", err)
 	}
 
+	// 解析选项参数
+	parseOpt := &ParseOption{}
+	for _, opt := range opts {
+		opt(parseOpt)
+	}
+
+	// 使用ParseOption中的ToolCallIndexManager获取工具调用索引
+	var index int
+	if parseOpt.ToolCallIndexManager != nil {
+		index = parseOpt.ToolCallIndexManager.GetToolCallIndex(evt.ToolUseId)
+	}
+
 	toolCall := providers.ToolCall{
-		ID:   evt.ToolUseId,
-		Type: "function",
+		ID:    evt.ToolUseId,
+		Type:  "function",
+		Index: &index, // 设置正确的索引
 		Function: providers.FunctionDefinitionParam{
 			Name:      evt.Name,
 			Arguments: convertInputToArgs(evt.Input),
