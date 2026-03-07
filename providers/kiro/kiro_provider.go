@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
+	"github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream"
 	"github.com/google/uuid"
 	"github.com/nomand-zc/provider-client/credentials"
 	kirocreds "github.com/nomand-zc/provider-client/credentials/kiro"
@@ -19,8 +20,10 @@ import (
 )
 
 const (
-	providerName = "kiro"
+	providerName     = "kiro"
 	defaultQueueSize = 100
+	// 事件流解码 payload 缓冲区大小
+	defaultPayloadBufSize = 10 * 1024
 )
 
 type kiroProvider struct {
@@ -90,33 +93,32 @@ func (p *kiroProvider) GenerateContentStream(ctx context.Context, creds credenti
 			RawStatusCode:   resp.StatusCode,
 		}
 	}
-	reader, err := converter.ProcessEventStream(ctx, resp.Body)
-	if err != nil {
-		return nil, err
-	}
+
 	chainQueue := queue.NewChanQueue[*providers.Response](defaultQueueSize)
-	go func () {
+	decoder := eventstream.NewDecoder()
+	payloadBuf := make([]byte, defaultPayloadBufSize)
+
+	go func() {
 		defer chainQueue.Close()
 		defer resp.Body.Close()
 		for {
-			event, err := reader.Read()
+			// 重置 payloadBuf 以复用底层数组
+			payloadBuf = payloadBuf[0:0]
+			msg, err := decoder.Decode(resp.Body, payloadBuf)
 			if err != nil {
-				if !errors.Is(err, queue.ErrQueueClosed) {
-					log.Errorf("kiro stream reader error: %v", err)
+				if err != io.EOF {
+					log.Errorf("kiro stream decode error: %v", err)
 				}
 				return
 			}
-			resp, err := converter.ConvertResponse(ctx, event)
 
-			// jsonData, _ := json.Marshal(resp)
-			// log.Debugf("kiro response: %s, err: %v", string(jsonData), err)
-
-			if err != nil || resp == nil{
+			result, err := converter.ConvertResponse(ctx, &msg)
+			if err != nil || result == nil {
 				continue
 			}
-			chainQueue.Write(resp)
+			chainQueue.Write(result)
 		}
 	}()
-	
+
 	return chainQueue, nil
 }
