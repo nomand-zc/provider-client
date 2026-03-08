@@ -1,4 +1,4 @@
-package limitrule
+package usagerule
 
 import (
 	"fmt"
@@ -42,8 +42,8 @@ const (
 	SourceTypeRequest SourceType = 2
 )
 
-// LimitRule 限流规则
-type LimitRule struct {
+// UsageRule 用量规则
+type UsageRule struct {
 	SourceType      SourceType      `json:"source_type"`
 	TimeGranularity TimeGranularity `json:"time_granularity"`
 	// WindowSize 窗口大小,单位为时间粒度。
@@ -63,24 +63,24 @@ type LimitRule struct {
 }
 
 // 检查是否触发了限流
-func (r *LimitRule) IsTriggered() bool {
+func (r *UsageRule) IsTriggered() bool {
 	return r.Remain <= 0
 }
 
 // IsValid 判断规则是否有效（非 nil 且 Total > 0）
-func (r *LimitRule) IsValid() bool {
+func (r *UsageRule) IsValid() bool {
 	return r != nil && r.Total > 0
 }
 
 // String 返回规则字符串
-func (r *LimitRule) String() string {
+func (r *UsageRule) String() string {
 	return fmt.Sprintf("source_type: %d, time_granularity: %s, window_size: %d, total: %f, used: %f, remain: %f, start_time: %v, end_time: %v",
 		r.SourceType, r.TimeGranularity, r.WindowSize, r.Total, r.Used, r.Remain, r.StartTime, r.EndTime)
 }
 
 // Clone 克隆规则
-func (r *LimitRule) Clone() *LimitRule {
-	return &LimitRule{
+func (r *UsageRule) Clone() *UsageRule {
+	return &UsageRule{
 		SourceType:      r.SourceType,
 		TimeGranularity: r.TimeGranularity,
 		WindowSize:      r.WindowSize,
@@ -93,7 +93,7 @@ func (r *LimitRule) Clone() *LimitRule {
 }
 
 // 判断当前时间是否在窗口内
-func (r *LimitRule) IsInWindow() bool {
+func (r *UsageRule) IsInWindow() bool {
 	t := time.Now()
 	if r.StartTime == nil || r.EndTime == nil {
 		return false
@@ -102,7 +102,7 @@ func (r *LimitRule) IsInWindow() bool {
 }
 
 // 根据当前时间，计算窗口开始时间和结束时间
-func (r *LimitRule) CalculateWindowTime() {
+func (r *UsageRule) CalculateWindowTime() {
 	now := time.Now()
 	var start time.Time
 
@@ -145,7 +145,7 @@ func (r *LimitRule) CalculateWindowTime() {
 }
 
 // 计算下一个周期的开始时间和结束时间
-func (r *LimitRule) CalculateNextWindowTime() (*time.Time, *time.Time) {
+func (r *UsageRule) CalculateNextWindowTime() (*time.Time, *time.Time) {
 	// 若当前窗口尚未计算，先计算当前窗口
 	if r.EndTime == nil {
 		r.CalculateWindowTime()

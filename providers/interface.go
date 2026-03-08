@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/nomand-zc/provider-client/credentials"
-	"github.com/nomand-zc/provider-client/limitrule"
 	"github.com/nomand-zc/provider-client/queue"
+	"github.com/nomand-zc/provider-client/usagerule"
 )
 
 // Provider is an interface for a provider. It includes methods for generating content and generating content in a stream. The GenerateContent method takes a context, credentials, and a request, and returns a response or an error. The GenerateContentStream method takes the same parameters but returns a ResponseChain for streaming responses.
@@ -33,7 +33,7 @@ type UsageLimiter interface {
 	ListModels(ctx context.Context, creds credentials.Credentials) ([]string, error)
 
 	// GetUsage gets usage.
-	GetUsage(ctx context.Context, creds credentials.Credentials) ([]*limitrule.LimitRule, error)
+	GetUsage(ctx context.Context, creds credentials.Credentials) ([]*usagerule.UsageRule, error)
 }
 
 // Provider is an interface for a provider. It includes methods for generating content, generating content in a stream, refreshing tokens, and limiting usage.

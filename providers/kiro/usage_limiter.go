@@ -12,8 +12,8 @@ import (
 	"github.com/nomand-zc/provider-client/credentials"
 	kirocreds "github.com/nomand-zc/provider-client/credentials/kiro"
 	"github.com/nomand-zc/provider-client/httpclient"
-	"github.com/nomand-zc/provider-client/limitrule"
 	"github.com/nomand-zc/provider-client/providers"
+	"github.com/nomand-zc/provider-client/usagerule"
 )
 
 const (
@@ -69,21 +69,21 @@ type userInfo struct {
 	UserId string `json:"userId"`
 }
 
-// convert 将 kiroUsageResp 转换为 LimitRule 切片
-func (r *kiroUsageResp) convert() []*limitrule.LimitRule {
+// convert 将 kiroUsageResp 转换为 UsageRule 切片
+func (r *kiroUsageResp) convert() []*usagerule.UsageRule {
 	if len(r.UsageBreakdownList) == 0 {
 		return nil
 	}
 
-	rules := make([]*limitrule.LimitRule, 0, len(r.UsageBreakdownList))
+rules := make([]*usagerule.UsageRule, 0, len(r.UsageBreakdownList))
 	for _, item := range r.UsageBreakdownList {
 		// 优先使用精确浮点值，若为 0 则回退到整数字段
 		total := item.UsageLimitWithPrecision
 		used := item.CurrentUsageWithPrecision
 
-		rule := &limitrule.LimitRule{
-			SourceType:      limitrule.SourceTypeToken,
-			TimeGranularity: limitrule.GranularityMonth,
+rule := &usagerule.UsageRule{
+			SourceType:      usagerule.SourceTypeToken,
+			TimeGranularity: usagerule.GranularityMonth,
 			WindowSize:      1,
 			Total:           total,
 			Used:            used,
@@ -111,7 +111,7 @@ func (p *kiroProvider) ListModels(ctx context.Context, _ credentials.Credentials
 }
 
 // GetUsage 获取当前凭证的今日已使用量
-func (p *kiroProvider) GetUsage(ctx context.Context, creds credentials.Credentials) ([]*limitrule.LimitRule, error) {
+func (p *kiroProvider) GetUsage(ctx context.Context, creds credentials.Credentials) ([]*usagerule.UsageRule, error) {
 	resp, err := p.send(ctx, creds)
 	if err != nil {
 		return nil, errors.Annotate(err, "send get usage limits request failed")

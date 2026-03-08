@@ -49,7 +49,7 @@ func (c *Credentials) Clone() *Credentials {
 }
 
 // Validate 校验凭据的格式有效性
-// 仅校验格式，不校验过期时间等业务相关性问题
+// 仅校验格式，不校验凭证是否过期
 func (c *Credentials) Validate() error {
 	if c == nil {
 		return credentials.ErrCredentialsEmpty
