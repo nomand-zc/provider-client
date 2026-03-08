@@ -42,9 +42,6 @@ func (p *errorParser) Parse(ctx context.Context, msg *StreamMessage, opts ...Opt
 	}
 
 	return providers.NewResponse(ctx,
-		providers.WithObject(providers.ObjectChatCompletion),
-		providers.WithIsPartial(false),
-		providers.WithDone(true),
 		providers.WithResponseError(&providers.ResponseError{
 			Message: errorMessage,
 			Type:    "error",

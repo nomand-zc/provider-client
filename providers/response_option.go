@@ -78,6 +78,9 @@ func WithResponseError(err *ResponseError) OptionFunc {
 // WithError sets the error of the response.
 func WithError(err error) OptionFunc {
 	return func(rsp *Response) {
+		if err == nil {
+			return
+		}
 		rsp.Error = &ResponseError{
 			Message: err.Error(),
 		}
@@ -124,6 +127,11 @@ func NewResponse(ctx context.Context, opts ...OptionFunc) *Response {
 	}
 	for _, opt := range opts {
 		opt(rsp)
+	}
+
+	if rsp.Error != nil {
+		rsp.IsPartial = false
+		rsp.Done = true
 	}
 
 	return rsp

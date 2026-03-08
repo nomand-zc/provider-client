@@ -9,6 +9,10 @@ const (
 	ObjectChatCompletion = "chat.completion"
 	// ObjectChatCompletionChunk 流式响应的 Object 类型
 	ObjectChatCompletionChunk = "chat.completion.chunk"
+	// ObjectTypeError 错误响应的 Object 类型
+	ObjectTypeError = "error"
+	// ObjectTypeToolResponse is the object type for tool response events.
+	ObjectTypeToolResponse = "tool.response"
 )
 
 // Choice represents a single completion choice.

@@ -214,16 +214,11 @@ func (p *kiroProvider) handleStreamEvent(ctx context.Context, inv *providers.Inv
 			providers.WithDone(true),
 			providers.WithIsPartial(false),
 			providers.WithUsage(&collectedUsage),
+			providers.WithError(firstErr),
 			providers.WithChoices(providers.Choice{
 				FinishReason: &finishReason,
 			}),
 		)
-		if firstErr != nil {
-			finalResp.Error = &providers.ResponseError{
-				Message: firstErr.Error(),
-				Type:    "stream_parse_error",
-			}
-		}
 		chainQueue.Write(ctx, finalResp)
 	}()
 
